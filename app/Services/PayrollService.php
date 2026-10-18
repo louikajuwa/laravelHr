@@ -8,6 +8,7 @@ use App\Models\LeaveRequest;
 use App\Models\Payroll;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -17,9 +18,7 @@ class PayrollService
 
     public function generate(User $user, Carbon $start, Carbon $end, User $hr): Payroll
     {
-        if (Payroll::where('user_id', $user->id)->forPeriod($start->toDateString(), $end->toDateString())->exists()) {
-            throw new RuntimeException("Payroll for {$user->name} in this period already exists.");
-        }
+        $this->assertNoOverlap($user, $start, $end);
 
         $structure = $user->salaryStructures()->activeOn($start->toDateString())->first();
         if (! $structure) {
@@ -42,8 +41,15 @@ class PayrollService
 
         $daysPresent = $daysAbsent = $lateMinutes = $overtimeMinutes = 0;
 
+        $today = Carbon::today();
+        $hireDate = $user->hire_date?->copy()->startOfDay();
+
         for ($d = $start->copy(); $d->lessThanOrEqualTo($end); $d->addDay()) {
             if ($shift && ! $shift->worksOn($d)) {
+                continue;
+            }
+            // Not employed yet, or the day has not happened yet: never absent.
+            if (($hireDate && $d->lt($hireDate)) || $d->gt($today)) {
                 continue;
             }
             $att = $attendances->get($d->toDateString());
@@ -54,8 +60,11 @@ class PayrollService
                     $lateMinutes += (int) $att->late_minutes;
                 }
                 $overtimeMinutes += (int) $att->overtime_minutes;
-            } elseif ($att && $att->status === 'on_leave') {
-                // counted in leave section
+            } elseif ($att && $att->status === 'half_day') {
+                $daysPresent += 0.5;
+                $daysAbsent += 0.5;
+            } elseif ($att && in_array($att->status, ['on_leave', 'holiday'], true)) {
+                // on_leave is counted in the leave section; holiday is simply not absent
             } else {
                 $daysAbsent++;
             }
@@ -89,12 +98,13 @@ class PayrollService
         $allowances = collect($structure->allowances ?? []);
         $allowancesTotal = round($allowances->sum(fn ($a) => (float) ($a['amount'] ?? 0)), 2);
 
-        $perfect = ($daysAbsent === 0 && $lateMinutes === 0 && $unpaidLeaveDays === 0)
+        $perfect = ($daysAbsent == 0 && $lateMinutes === 0 && $unpaidLeaveDays === 0)
             ? round((float) $structure->perfect_attendance_bonus, 2) : 0.0;
         $bonuses = $perfect;
 
         $gross = round($basic + $overtimePay + $bonuses + $allowancesTotal, 2);
         $deductionsTotal = round($lateDeduction + $absenceDeduction + $unpaidLeaveDeduction, 2);
+        // NOTE: net pay is floored at 0 (deductions can never make it negative); the excess is not carried over.
         $netPay = round(max(0, $gross - $deductionsTotal), 2);
 
         return DB::transaction(function () use (
@@ -103,6 +113,10 @@ class PayrollService
             $daysPresent, $daysAbsent, $lateMinutes, $overtimeMinutes, $paidLeaveDays, $unpaidLeaveDays,
             $allowances, $perfect
         ) {
+            // Serialize per employee and re-check overlap inside the transaction.
+            User::withTrashed()->whereKey($user->id)->lockForUpdate()->first();
+            $this->assertNoOverlap($user, $start, $end);
+
             $payroll = Payroll::create([
                 'user_id' => $user->id,
                 'period_start' => $start->toDateString(),
@@ -164,7 +178,7 @@ class PayrollService
      */
     public function generateBatch(Carbon $start, Carbon $end, User $hr, ?int $departmentId = null): array
     {
-        $query = User::active()->whereHas('salaryStructures', fn ($q) => $q->where('is_active', true));
+        $query = User::active()->whereHas('salaryStructures', fn ($q) => $q->activeOn($start->toDateString()));
         if ($departmentId) {
             $query->where('department_id', $departmentId);
         }
@@ -177,6 +191,9 @@ class PayrollService
             try {
                 $this->generate($user, $start, $end, $hr);
                 $generated++;
+            } catch (QueryException $e) {
+                // Unique-constraint race: another request created this payroll first.
+                $skipped++;
             } catch (RuntimeException $e) {
                 if (str_contains($e->getMessage(), 'already exists')) {
                     $skipped++;
@@ -191,18 +208,41 @@ class PayrollService
 
     public function finalize(Payroll $payroll): Payroll
     {
-        $payroll->update(['status' => 'finalized', 'finalized_at' => now()]);
-        $this->audit->log('payroll.finalized', $payroll, ['status' => 'draft'], ['status' => 'finalized']);
-
-        return $payroll;
+        return $this->transition($payroll, 'draft', 'finalized', 'finalized_at', 'payroll.finalized');
     }
 
     public function markPaid(Payroll $payroll): Payroll
     {
-        $payroll->update(['status' => 'paid', 'paid_at' => now()]);
-        $this->audit->log('payroll.paid', $payroll, [], ['status' => 'paid']);
+        return $this->transition($payroll, 'finalized', 'paid', 'paid_at', 'payroll.paid');
+    }
 
-        return $payroll;
+    private function transition(Payroll $payroll, string $from, string $to, string $stampColumn, string $action): Payroll
+    {
+        return DB::transaction(function () use ($payroll, $from, $to, $stampColumn, $action) {
+            $fresh = Payroll::whereKey($payroll->getKey())->lockForUpdate()->firstOrFail();
+
+            if ($fresh->status !== $from) {
+                throw new RuntimeException("Payroll is {$fresh->status}; only a {$from} payroll can become {$to}.");
+            }
+
+            $fresh->update(['status' => $to, $stampColumn => now()]);
+            $this->audit->log($action, $fresh, ['status' => $from], ['status' => $to]);
+            $payroll->setRawAttributes($fresh->getAttributes(), true);
+
+            return $payroll;
+        });
+    }
+
+    private function assertNoOverlap(User $user, Carbon $start, Carbon $end): void
+    {
+        $exists = Payroll::where('user_id', $user->id)
+            ->where('period_start', '<=', $end->toDateString())
+            ->where('period_end', '>=', $start->toDateString())
+            ->exists();
+
+        if ($exists) {
+            throw new RuntimeException("Payroll for {$user->name} in this period already exists (overlapping period).");
+        }
     }
 
     private function leaveDaysInPeriod(LeaveRequest $leave, Carbon $start, Carbon $end, $shift): int

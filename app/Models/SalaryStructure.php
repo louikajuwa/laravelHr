@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
-use App\Models\Shift;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SalaryStructure extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'user_id', 'basic_salary', 'pay_frequency', 'working_days_per_month',
         'overtime_rate_multiplier', 'late_deduction_per_minute', 'absence_deduction_mode',
@@ -28,13 +30,12 @@ class SalaryStructure extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function scopeActiveOn(Builder $q, string $date): Builder
     {
-        return $q->where('is_active', true)
-            ->where('effective_from', '<=', $date)
+        return $q->where('effective_from', '<=', $date)
             ->where(function (Builder $sub) use ($date) {
                 $sub->whereNull('effective_to')->orWhere('effective_to', '>=', $date);
             })

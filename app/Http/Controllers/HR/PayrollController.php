@@ -10,17 +10,21 @@ use App\Services\PayrollExportService;
 use App\Services\PayrollService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PayrollController extends Controller
 {
     public function __construct(private PayrollService $payroll, private PayrollExportService $export) {}
 
-    public function index(Request $request): View|\Illuminate\Http\JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
+        $request->validate(['period_start' => ['nullable', 'date'], 'status' => ['nullable', 'string'], 'q' => ['nullable', 'string']]);
+
         $payrolls = Payroll::query()
             ->with(['user:id,name,employee_code,department_id', 'user.department:id,name'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))
@@ -32,18 +36,18 @@ class PayrollController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'data' => $payrolls->getCollection()->map(fn ($p) => [
-                    'id'                => $p->id,
-                    'user_name'         => $p->user->name,
-                    'employee_code'     => $p->user->employee_code,
-                    'department'        => $p->user->department?->name,
-                    'period_start_epoch'=> $p->period_start->timestamp,
-                    'period_end_epoch'  => $p->period_end->timestamp,
-                    'gross'             => number_format($p->gross, 2),
-                    'deductions_total'  => number_format($p->deductions_total, 2),
-                    'net_pay'           => number_format($p->net_pay, 2),
-                    'status'            => $p->status,
-                    'urls'              => [
-                        'show'    => route('hr.payroll.show', $p),
+                    'id' => $p->id,
+                    'user_name' => $p->user?->name,
+                    'employee_code' => $p->user?->employee_code,
+                    'department' => $p->user->department?->name,
+                    'period_start_epoch' => $p->period_start->timestamp,
+                    'period_end_epoch' => $p->period_end->timestamp,
+                    'gross' => number_format($p->gross, 2),
+                    'deductions_total' => number_format($p->deductions_total, 2),
+                    'net_pay' => number_format($p->net_pay, 2),
+                    'status' => $p->status,
+                    'urls' => [
+                        'show' => route('hr.payroll.show', $p),
                         'payslip' => route('hr.payroll.payslip', $p),
                     ],
                 ]),
@@ -52,7 +56,7 @@ class PayrollController extends Controller
         }
 
         return view('hr.payroll.index', [
-            'payrolls'    => $payrolls,
+            'payrolls' => $payrolls,
             'departments' => Department::orderBy('name')->get(['id', 'name']),
         ]);
     }
@@ -81,14 +85,22 @@ class PayrollController extends Controller
 
     public function finalize(Payroll $payroll): RedirectResponse
     {
-        $this->payroll->finalize($payroll);
+        try {
+            $this->payroll->finalize($payroll);
+        } catch (RuntimeException $e) {
+            return back()->withErrors(['payroll' => $e->getMessage()]);
+        }
 
         return back()->with('status', 'Payroll finalized.');
     }
 
     public function markPaid(Payroll $payroll): RedirectResponse
     {
-        $this->payroll->markPaid($payroll);
+        try {
+            $this->payroll->markPaid($payroll);
+        } catch (RuntimeException $e) {
+            return back()->withErrors(['payroll' => $e->getMessage()]);
+        }
 
         return back()->with('status', 'Payroll marked as paid.');
     }
@@ -100,6 +112,8 @@ class PayrollController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
+        $request->validate(['period_start' => ['nullable', 'date'], 'status' => ['nullable', 'string']]);
+
         $payrolls = Payroll::query()->with('user:id,name,employee_code')
             ->when($request->filled('period_start'), fn ($q) => $q->where('period_start', $request->date('period_start')->toDateString()))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))

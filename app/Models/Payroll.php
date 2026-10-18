@@ -4,13 +4,14 @@ namespace App\Models;
 
 use App\Support\HasEpochTimes;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Payroll extends Model
 {
-    use HasEpochTimes;
+    use HasEpochTimes, HasFactory;
 
     protected $fillable = [
         'user_id', 'period_start', 'period_end', 'label', 'basic', 'overtime_pay',
@@ -41,7 +42,7 @@ class Payroll extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function generatedBy(): BelongsTo
