@@ -30,7 +30,15 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'employee_code' => 'EMP-'.fake()->unique()->numerify('#####'),
+            'hire_date' => now()->subYear()->toDateString(),
+            'is_active' => true,
         ];
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn () => ['is_active' => false]);
     }
 
     /**
