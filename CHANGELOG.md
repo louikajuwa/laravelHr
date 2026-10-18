@@ -1,5 +1,28 @@
 # Changelog
 
+## [Unreleased] — 2026-10-18 (follow-up)
+
+### New features
+- **Revoke approved leave (HR):** the balance is refunded, unworked leave days are reverted, and overlapping draft payrolls are discarded for regeneration. Revoking is blocked when a finalized or paid payroll covers the dates. There is a new `revoked` status.
+- **Leave carry-over:** unused days carry into the new year up to the type's `max_carry_over_days` (0 = no limit), with no expiry.
+- **Semi-monthly payroll:** `biweekly` salary structures are paid for 1–15 and 16–end, each with half the basic salary, allowances and bonus. Monthly staff still require a full month.
+- **Password reset:** "Forgot password?" flow with a response that doesn't reveal whether the email exists, throttling, and invalidation of other sessions.
+- **Company timezone:** `HR_TIMEZONE` (default `UTC`) sets the attendance date, lateness against shift times, overnight clock-out, HR corrections, and the nightly day close. Storage remains UTC.
+
+### Build / infrastructure
+- Tailwind Play CDN replaced by Vite 6 + Tailwind 3.4 (`package.json`, `vite.config.js`, `tailwind.config.js`). The output in `public/build` is not committed.
+- The PHP container runs as non-root user `app` (uid/gid 1000, configurable via build args). The new one-shot `app-init` service sets ownership of `storage/`, `bootstrap/cache` and `vendor/`, and `chmod 777` was removed.
+- New services: `mailpit` (dev mail at http://localhost:8025) and `node` (profile `tools`, for asset builds). `nginx` now has a healthcheck on `/up`.
+
+### Changed
+- Salary structure form: "Biweekly" is now labelled "Semi-monthly (1–15, 16–end)". The undefined "Fixed" absence mode is no longer offered.
+
+### Database / configuration — manual steps
+- **Migration:** `2026_10_18_000001_add_revocation_to_leave_requests` (additive: `revoked_at`, `revoked_by`). It has already been applied to the local dev DB.
+- Build the assets: `docker compose run --rm node npm ci && docker compose run --rm node npm run build`.
+- Rebuild the image: `docker compose up -d --build`.
+- `.env`: set `MAIL_MAILER=smtp`, `MAIL_HOST=mailpit`, `MAIL_PORT=1025` for Mailpit, and optionally set `HR_TIMEZONE`.
+
 ## [Unreleased] — 2026-10-18
 
 ### Security
