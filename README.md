@@ -117,3 +117,18 @@ docker exec hr_app php artisan db:seed
    |------|-------|----------|
    | HR / Admin | admin@hr.test | password |
    | Employee | employee@hr.test | password |
+
+   Demo accounts are seeded only when `APP_ENV` is `local` or `testing`.
+
+## Tests
+
+Tests run against a separate MySQL database, `laravel_hr_testing` (see `phpunit.xml`). `tests/TestCase.php` refuses to run against any database whose name does not contain `testing`. Create the database once:
+
+```bash
+docker exec -i hr_mysql mysql -uroot -p <<'SQL'
+CREATE DATABASE IF NOT EXISTS laravel_hr_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL ON laravel_hr_testing.* TO 'hr_user'@'%';
+SQL
+docker exec hr_app php artisan test
+docker exec hr_app vendor/bin/pint --test
+```

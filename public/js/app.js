@@ -112,7 +112,11 @@
         // Off-canvas on small screens: hide from Tab order and screen readers.
         if (desktop || open) { $sb.removeAttr('inert'); } else { $sb.attr('inert', ''); }
         $('[data-sidebar-backdrop]').toggleClass('hidden', !open);
-        $('[data-sidebar-toggle]').attr('aria-expanded', open ? 'true' : 'false');
+        $('[data-sidebar-toggle]').attr({
+            'aria-expanded': open ? 'true' : 'false',
+            'aria-label': open ? 'Close navigation menu' : 'Open navigation menu'
+        });
+        if (open && !desktop) { $sb.find('a, button').first().trigger('focus'); }
     }
 
     $(function () {
