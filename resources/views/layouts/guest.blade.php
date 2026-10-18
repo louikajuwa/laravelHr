@@ -7,15 +7,7 @@
     <title>@yield('title', 'Sign in') · {{ config('app.name') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: { extend: {
-                fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
-                colors: { accent: { 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' } },
-            } },
-        };
-    </script>
+    @vite('resources/css/app.css')
 </head>
 <body class="h-full bg-slate-950 font-sans text-slate-100 antialiased">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-accent-700 focus:outline-none focus:ring-2 focus:ring-accent-500">Skip to main content</a>
