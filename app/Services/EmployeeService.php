@@ -44,22 +44,24 @@ class EmployeeService
      */
     public function update(User $user, array $data): User
     {
-        $before = $user->only(['name', 'email', 'department_id', 'job_position_id', 'shift_id', 'employment_type']);
+        return DB::transaction(function () use ($user, $data) {
+            $before = $user->only(['name', 'email', 'department_id', 'job_position_id', 'shift_id', 'employment_type']);
 
-        $user->fill($this->fillable($data));
-        if (! empty($data['password'])) {
-            $user->password = Hash::make($data['password']);
-        }
-        $user->save();
+            $user->fill($this->fillable($data));
+            if (! empty($data['password'])) {
+                $user->password = Hash::make($data['password']);
+            }
+            $user->save();
 
-        if (! empty($data['role'])) {
-            $user->syncRoles([$data['role']]);
-        }
+            if (! empty($data['role'])) {
+                $user->syncRoles([$data['role']]);
+            }
 
-        $this->audit->log('user.updated', $user, $before, $user->only(array_keys($before)),
-            "Updated employee {$user->name}");
+            $this->audit->log('user.updated', $user, $before, $user->only(array_keys($before)),
+                "Updated employee {$user->name}");
 
-        return $user;
+            return $user;
+        });
     }
 
     public function setActive(User $user, bool $active): User

@@ -58,6 +58,10 @@
                         <x-field label="Confirm Password" name="password_confirmation">
                             <x-input name="password_confirmation" type="password" autocomplete="new-password" />
                         </x-field>
+
+                        <x-field label="Current Password" name="current_password" hint="Required to change email or password" class="sm:col-span-2">
+                            <x-input name="current_password" type="password" autocomplete="current-password" />
+                        </x-field>
                     </div>
 
                     <div class="mt-6 flex items-center justify-end gap-2">

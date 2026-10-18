@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Employee;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -10,6 +11,23 @@ class UpdateEmployeeRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $employee = $this->route('employee');
+            if (! $employee || $this->input('role') === 'admin' || ! $employee->isAdmin()) {
+                return;
+            }
+
+            if ($employee->id === $this->user()?->id) {
+                $validator->errors()->add('role', 'You cannot remove your own admin role.');
+            } elseif ($employee->is_active
+                && ! User::role('admin')->where('is_active', true)->where('id', '!=', $employee->id)->exists()) {
+                $validator->errors()->add('role', 'You cannot demote the last active admin.');
+            }
+        });
     }
 
     /**

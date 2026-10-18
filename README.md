@@ -59,6 +59,8 @@ Copy `.env.example` to `.env`. To match the Docker MySQL service, set the follow
 
 The `mysql` service is configured via these Compose environment variables: `MYSQL_ROOT_PASSWORD=rootsecret`, `MYSQL_DATABASE=laravel_hr`, `MYSQL_USER=hr_user`, `MYSQL_PASSWORD=hr_secret`. The `phpmyadmin` service uses `PMA_HOST=mysql`, `PMA_PORT=3306`, `UPLOAD_LIMIT=256M`.
 
+Passwords can be overridden via `DB_ROOT_PASSWORD` / `DB_PASSWORD` in `.env` (the defaults above are for local dev only; change them in production). MySQL and phpMyAdmin ports are bound to `127.0.0.1`. Demo data is seeded only in `local`/`testing` environments, so the demo accounts below must not exist in production.
+
 ## Volumes & persistence
 
 **Named volumes**

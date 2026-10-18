@@ -11,7 +11,7 @@ Route::get('/', fn () => redirect()->route(Auth::check() ? 'dashboard' : 'login'
 // --- Authentication (hand-rolled) ---
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('login', [AuthController::class, 'login']);
+    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 });
 Route::post('logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 

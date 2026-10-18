@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Payroll;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PayrollExportService
@@ -22,7 +23,7 @@ class PayrollExportService
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int,Payroll>  $payrolls
+     * @param  Collection<int,Payroll>  $payrolls
      */
     public function salaryReportCsv($payrolls, string $filename = 'salary-report.csv'): StreamedResponse
     {
@@ -40,16 +41,26 @@ class PayrollExportService
             ]);
 
             foreach ($payrolls as $p) {
-                fputcsv($out, [
-                    $p->user->employee_code,
-                    $p->user->name,
+                fputcsv($out, array_map($this->safeCell(...), [
+                    $p->user?->employee_code,
+                    $p->user?->name ?? '(deleted)',
                     $p->period_start->format('Y-m-d').' to '.$p->period_end->format('Y-m-d'),
                     $p->basic, $p->overtime_pay, $p->bonuses, $p->allowances_total, $p->gross,
                     $p->late_deduction, $p->absence_deduction, $p->unpaid_leave_deduction,
                     $p->deductions_total, $p->net_pay, $p->status,
-                ]);
+                ]));
             }
             fclose($out);
         }, $filename, $headers);
+    }
+
+    /** Neutralize CSV formula injection in string cells. */
+    public function safeCell(mixed $value): mixed
+    {
+        if (is_string($value) && $value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            return "'".$value;
+        }
+
+        return $value;
     }
 }

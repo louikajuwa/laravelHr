@@ -12,7 +12,10 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             DepartmentShiftSeeder::class,
             LeaveTypeSeeder::class,
-            DemoDataSeeder::class,
         ]);
+
+        if (app()->environment(['local', 'testing'])) {
+            $this->call(DemoDataSeeder::class);
+        }
     }
 }
