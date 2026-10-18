@@ -8,6 +8,7 @@ enum LeaveStatus: string
     case Approved = 'approved';
     case Rejected = 'rejected';
     case Cancelled = 'cancelled';
+    case Revoked = 'revoked';
 
     public function label(): string
     {
@@ -21,6 +22,7 @@ enum LeaveStatus: string
             self::Approved => 'bg-emerald-100 text-emerald-700',
             self::Rejected => 'bg-rose-100 text-rose-700',
             self::Cancelled => 'bg-slate-100 text-slate-600',
+            self::Revoked => 'bg-orange-100 text-orange-700',
         };
     }
 

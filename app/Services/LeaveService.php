@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\LeaveBalance;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
+use App\Models\Payroll;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -129,6 +130,67 @@ class LeaveService
         });
     }
 
+    /**
+     * Revoke an approved leave (HR). The original decision_note is replaced by "Revoked: <note>" when a note is given.
+     *
+     * @return array{0: LeaveRequest, 1: int} the leave and the number of discarded draft payrolls
+     */
+    public function revoke(LeaveRequest $leave, User $hr, ?string $note = null): array
+    {
+        return DB::transaction(function () use ($leave, $hr, $note) {
+            $leave = LeaveRequest::whereKey($leave->getKey())->lockForUpdate()->firstOrFail();
+
+            if ($leave->status !== 'approved') {
+                throw new RuntimeException('Only approved leave requests can be revoked.');
+            }
+            if ($leave->user_id === $hr->id) {
+                throw new RuntimeException('You cannot revoke your own leave request.');
+            }
+
+            $start = Carbon::parse($leave->start_date)->toDateString();
+            $end = Carbon::parse($leave->end_date)->toDateString();
+            $overlapping = Payroll::where('user_id', $leave->user_id)
+                ->where('period_start', '<=', $end)
+                ->where('period_end', '>=', $start);
+
+            if ((clone $overlapping)->whereIn('status', ['finalized', 'paid'])->exists()) {
+                throw new RuntimeException('Cannot revoke: these dates are covered by a finalized payroll.');
+            }
+
+            $discarded = 0;
+            foreach ((clone $overlapping)->where('status', 'draft')->get() as $draft) {
+                $this->audit->log('payroll.draft_discarded', $draft, ['status' => 'draft'], [
+                    'reason' => "Leave #{$leave->id} revoked",
+                ], "Discarded draft payroll #{$draft->id} after revoking leave #{$leave->id}", $hr->id);
+                $draft->delete(); // payroll_items cascade on delete
+                $discarded++;
+            }
+
+            $this->lockedBalance($leave->user, $leave->leaveType, (int) Carbon::parse($leave->start_date)->year)
+                ->decrement('used', (float) $leave->days);
+
+            $today = now()->toDateString();
+            $rows = Attendance::where('user_id', $leave->user_id)
+                ->whereBetween('date', [$start, $end])
+                ->where('status', 'on_leave')->whereNull('time_in');
+            (clone $rows)->where('date', '>=', $today)->delete();
+            (clone $rows)->where('date', '<', $today)->update(['status' => 'absent', 'remarks' => 'Leave revoked']);
+
+            $leave->update([
+                'status' => 'revoked',
+                'revoked_at' => now(),
+                'revoked_by' => $hr->id,
+                'decision_note' => $note ? 'Revoked: '.$note : $leave->decision_note,
+            ]);
+
+            $this->audit->log('leave.revoked', $leave, ['status' => 'approved'],
+                ['status' => 'revoked', 'note' => $note, 'discarded_drafts' => $discarded],
+                "Revoked leave #{$leave->id}", $hr->id);
+
+            return [$leave, $discarded];
+        });
+    }
+
     public function allocateYearly(int $year): int
     {
         $count = 0;
@@ -138,7 +200,10 @@ class LeaveService
             foreach ($types as $type) {
                 $user->leaveBalances()->updateOrCreate(
                     ['leave_type_id' => $type->id, 'year' => $year],
-                    ['allocated' => $type->default_days_per_year],
+                    [
+                        'allocated' => $type->default_days_per_year,
+                        'carried_over' => $this->carriedOver($user, $type, $year),
+                    ],
                 );
                 $count++;
             }
@@ -151,8 +216,24 @@ class LeaveService
     {
         return LeaveBalance::firstOrCreate(
             ['user_id' => $user->id, 'leave_type_id' => $type->id, 'year' => $year],
-            ['allocated' => $type->default_days_per_year],
+            [
+                'allocated' => $type->default_days_per_year,
+                'carried_over' => $this->carriedOver($user, $type, $year),
+            ],
         );
+    }
+
+    /** Unused days from the previous year, capped by max_carry_over_days (0 = no cap). */
+    private function carriedOver(User $user, LeaveType $type, int $year): float
+    {
+        if (! $type->carry_over) {
+            return 0.0;
+        }
+        $prev = LeaveBalance::where(['user_id' => $user->id, 'leave_type_id' => $type->id, 'year' => $year - 1])->first();
+        $carried = max(0.0, (float) ($prev?->available ?? 0));
+        $cap = (float) $type->max_carry_over_days;
+
+        return $cap > 0 ? min($carried, $cap) : $carried;
     }
 
     public function workingDaysBetween(User $user, Carbon $start, Carbon $end): int

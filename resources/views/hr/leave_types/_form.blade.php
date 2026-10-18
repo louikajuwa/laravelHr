@@ -13,6 +13,7 @@
     </x-field>
     <x-field label="Max Carry-over Days" name="max_carry_over_days">
         <x-input name="max_carry_over_days" type="number" value="{{ old('max_carry_over_days', $leaveType?->max_carry_over_days) }}" />
+        <p class="mt-1 text-xs text-slate-500">0 = no limit. Unused days from last year carry over up to this amount.</p>
     </x-field>
 
     <div class="md:col-span-2 space-y-3">

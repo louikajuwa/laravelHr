@@ -15,6 +15,7 @@ class LeaveRequest extends Model
     protected $fillable = [
         'user_id', 'leave_type_id', 'start_date', 'end_date', 'days', 'reason',
         'status', 'approver_id', 'decided_at', 'decision_note', 'attachment_path',
+        'revoked_at', 'revoked_by',
     ];
 
     protected $casts = [
@@ -22,6 +23,7 @@ class LeaveRequest extends Model
         'end_date' => 'date',
         'days' => 'decimal:1',
         'decided_at' => 'datetime',
+        'revoked_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

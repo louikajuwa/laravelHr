@@ -42,6 +42,7 @@ class LeaveRequestController extends Controller
                     'urls' => [
                         'approve' => route('hr.leave.approve', $r),
                         'reject' => route('hr.leave.reject', $r),
+                        'revoke' => $r->status === 'approved' ? route('hr.leave.revoke', $r) : null,
                     ],
                 ]),
                 'pagination' => $this->paginationMeta($requests),
@@ -82,6 +83,26 @@ class LeaveRequestController extends Controller
             $this->leaves->reject($leaveRequest, $request->user(), $note);
 
             return back()->with('status', 'Leave rejected.');
+        } catch (RuntimeException $e) {
+            return back()->withErrors(['leave' => $e->getMessage()]);
+        }
+    }
+
+    public function revoke(Request $request, LeaveRequest $leaveRequest): RedirectResponse
+    {
+        try {
+            if ($leaveRequest->user_id === $request->user()->id) {
+                throw new RuntimeException('You cannot revoke your own leave request.');
+            }
+            $note = $request->validate(['note' => ['nullable', 'string', 'max:1000']])['note'] ?? null;
+            [, $discarded] = $this->leaves->revoke($leaveRequest, $request->user(), $note);
+
+            $msg = 'Leave revoked and balance refunded.';
+            if ($discarded > 0) {
+                $msg .= " {$discarded} draft payroll(s) covering these dates were discarded; please regenerate them.";
+            }
+
+            return back()->with('status', $msg);
         } catch (RuntimeException $e) {
             return back()->withErrors(['leave' => $e->getMessage()]);
         }

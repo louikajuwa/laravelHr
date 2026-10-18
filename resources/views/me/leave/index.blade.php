@@ -47,6 +47,7 @@ var LEAVE_STATUS = {
     approved:  { color: 'bg-emerald-100 text-emerald-700', label: 'Approved' },
     rejected:  { color: 'bg-rose-100 text-rose-700',      label: 'Rejected'  },
     cancelled: { color: 'bg-slate-200 text-slate-600',    label: 'Cancelled' },
+    revoked:   { color: 'bg-orange-100 text-orange-700', label: 'Revoked' },
 };
 window.HR.pageRenderer = {
     cols: 5,
