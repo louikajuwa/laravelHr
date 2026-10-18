@@ -59,11 +59,11 @@
                     <div class="border-b border-slate-100 py-3 last:border-0">
                         <p class="text-sm font-medium text-slate-700">{{ $c->field }}</p>
                         <p class="mt-1 text-xs text-slate-500">
-                            <span class="text-slate-400">{{ $c->old_value ?? '—' }}</span>
+                            <span class="text-slate-500">{{ $c->old_value ?? '—' }}</span>
                             <span class="mx-1">→</span>
                             <span class="text-slate-700">{{ $c->new_value ?? '—' }}</span>
                         </p>
-                        <p class="mt-1 text-xs text-slate-400">
+                        <p class="mt-1 text-xs text-slate-500">
                             by {{ $c->correctedBy?->name ?? 'System' }} ·
                             <span data-epoch="{{ $c->epoch('created_at') }}" data-format="MMM D, YYYY · h:mm A">—</span>
                         </p>

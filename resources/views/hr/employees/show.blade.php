@@ -33,7 +33,7 @@
                     'Hire Date' => $employee->hire_date?->format('M d, Y'),
                 ] as $label => $value)
                     <div class="flex justify-between gap-4">
-                        <dt class="text-slate-400">{{ $label }}</dt>
+                        <dt class="text-slate-500">{{ $label }}</dt>
                         <dd class="text-right font-medium text-slate-700">{{ $value ?: '—' }}</dd>
                     </div>
                 @endforeach
@@ -45,12 +45,12 @@
                 @if ($employee->activeSalaryStructure)
                     @php $s = $employee->activeSalaryStructure; @endphp
                     <div class="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
-                        <div><p class="text-slate-400">Basic</p><p class="font-semibold text-slate-800">{{ number_format($s->basic_salary, 2) }}</p></div>
-                        <div><p class="text-slate-400">OT Multiplier</p><p class="font-semibold text-slate-800">{{ $s->overtime_rate_multiplier }}×</p></div>
-                        <div><p class="text-slate-400">Late / min</p><p class="font-semibold text-slate-800">{{ number_format($s->late_deduction_per_minute, 2) }}</p></div>
-                        <div><p class="text-slate-400">Perfect Bonus</p><p class="font-semibold text-slate-800">{{ number_format($s->perfect_attendance_bonus, 2) }}</p></div>
-                        <div><p class="text-slate-400">Work Days/mo</p><p class="font-semibold text-slate-800">{{ $s->working_days_per_month }}</p></div>
-                        <div><p class="text-slate-400">Effective</p><p class="font-semibold text-slate-800">{{ $s->effective_from->format('M d, Y') }}</p></div>
+                        <div><p class="text-slate-500">Basic</p><p class="font-semibold text-slate-800">{{ number_format($s->basic_salary, 2) }}</p></div>
+                        <div><p class="text-slate-500">OT Multiplier</p><p class="font-semibold text-slate-800">{{ $s->overtime_rate_multiplier }}×</p></div>
+                        <div><p class="text-slate-500">Late / min</p><p class="font-semibold text-slate-800">{{ number_format($s->late_deduction_per_minute, 2) }}</p></div>
+                        <div><p class="text-slate-500">Perfect Bonus</p><p class="font-semibold text-slate-800">{{ number_format($s->perfect_attendance_bonus, 2) }}</p></div>
+                        <div><p class="text-slate-500">Work Days/mo</p><p class="font-semibold text-slate-800">{{ $s->working_days_per_month }}</p></div>
+                        <div><p class="text-slate-500">Effective</p><p class="font-semibold text-slate-800">{{ $s->effective_from->format('M d, Y') }}</p></div>
                     </div>
                 @else
                     <x-empty message="No salary structure set." icon="cash">

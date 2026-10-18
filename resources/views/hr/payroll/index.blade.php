@@ -9,12 +9,16 @@
         </x-slot:actions>
     </x-page-header>
 
-    <div id="gen-payroll" data-modal class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-4">
+    <div id="gen-payroll" data-modal role="dialog" aria-modal="true" aria-labelledby="gen-payroll-title"
+         @if ($errors->hasAny(['period_start', 'period_end', 'department_id'])) data-reopen="1" @endif
+         class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-4">
         <div class="w-full max-w-lg rounded-2xl bg-white p-5">
-            <h3 class="mb-4 text-base font-semibold text-slate-800">Generate Payroll</h3>
-            <form method="POST" action="{{ route('hr.payroll.generate') }}">
+            <h3 id="gen-payroll-title" class="mb-4 text-base font-semibold text-slate-800">Generate Payroll</h3>
+            <form method="POST" action="{{ route('hr.payroll.generate') }}"
+                  data-confirm="Generate payroll for the selected period and department?" data-confirm-text="Generate" data-confirm-class="bg-accent-600 hover:bg-accent-700">
                 @csrf
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <p class="text-xs text-slate-500 sm:col-span-2">Payroll periods must cover one full calendar month (1st to last day).</p>
                     <x-field label="Period Start" name="period_start" :required="true">
                         <x-input name="period_start" type="date" value="{{ old('period_start', now()->startOfMonth()->format('Y-m-d')) }}" required />
                     </x-field>
@@ -41,17 +45,17 @@
     <form data-list-filter action="{{ route('hr.payroll.index') }}" method="GET"
           class="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
         <div class="relative flex-1 min-w-[200px]">
-            <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400"><x-icon name="search" class="h-4 w-4" /></span>
-            <input type="search" name="q" value="{{ request('q') }}" placeholder="Search name or code…"
+            <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500"><x-icon name="search" class="h-4 w-4" /></span>
+            <input type="search" name="q" aria-label="Search name or code" value="{{ request('q') }}" placeholder="Search name or code…"
                    class="block w-full rounded-xl border-slate-300 pl-9 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
         </div>
-        <select name="status" class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
+        <select name="status" aria-label="Status" class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
             <option value="">All statuses</option>
             <option value="draft" @selected(request('status') === 'draft')>Draft</option>
             <option value="finalized" @selected(request('status') === 'finalized')>Finalized</option>
             <option value="paid" @selected(request('status') === 'paid')>Paid</option>
         </select>
-        <input type="date" name="period_start" value="{{ request('period_start') }}"
+        <input type="date" name="period_start" aria-label="Period start" value="{{ request('period_start') }}"
                class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
     </form>
 
@@ -61,13 +65,13 @@
                 <table class="min-w-full divide-y divide-slate-100 text-sm">
                     <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                         <tr>
-                            <th class="px-5 py-3">Employee</th>
-                            <th class="px-5 py-3">Period</th>
-                            <th class="px-5 py-3">Gross</th>
-                            <th class="px-5 py-3">Deductions</th>
-                            <th class="px-5 py-3">Net Pay</th>
-                            <th class="px-5 py-3">Status</th>
-                            <th class="px-5 py-3 text-right">Actions</th>
+                            <th scope="col" class="px-5 py-3">Employee</th>
+                            <th scope="col" class="px-5 py-3">Period</th>
+                            <th scope="col" class="px-5 py-3">Gross</th>
+                            <th scope="col" class="px-5 py-3">Deductions</th>
+                            <th scope="col" class="px-5 py-3">Net Pay</th>
+                            <th scope="col" class="px-5 py-3">Status</th>
+                            <th scope="col" class="px-5 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100"></tbody>
@@ -93,7 +97,7 @@ window.HR.pageRenderer = {
         return '<tr class="hover:bg-slate-50/60">' +
             '<td class="px-5 py-3">' +
             '<a href="' + p.urls.show + '" class="font-medium text-slate-800 hover:text-accent-600">' + HR.esc(p.user_name) + '</a>' +
-            '<p class="text-xs text-slate-400">' + HR.esc(p.employee_code) + dept + '</p></td>' +
+            '<p class="text-xs text-slate-500">' + HR.esc(p.employee_code) + dept + '</p></td>' +
             '<td class="px-5 py-3 text-slate-600">' +
             HR.epoch(p.period_start_epoch, 'MMM D') + ' – ' + HR.epoch(p.period_end_epoch, 'MMM D, YYYY') + '</td>' +
             '<td class="px-5 py-3 text-slate-600">' + HR.esc(p.gross) + '</td>' +
@@ -101,8 +105,8 @@ window.HR.pageRenderer = {
             '<td class="px-5 py-3 font-bold text-slate-800">' + HR.esc(p.net_pay) + '</td>' +
             '<td class="px-5 py-3">' + HR.badge(st.color, st.label) + '</td>' +
             '<td class="px-5 py-3"><div class="flex items-center justify-end gap-1.5">' +
-            '<a href="' + p.urls.show + '" class="rounded-lg px-2.5 py-1 text-xs font-semibold text-accent-600 hover:bg-accent-50">View</a>' +
-            '<a href="' + p.urls.payslip + '" target="_blank" class="rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100">Payslip</a>' +
+            '<a href="' + p.urls.show + '" class="rounded-lg px-2.5 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 text-accent-600 hover:bg-accent-50">View</a>' +
+            '<a href="' + p.urls.payslip + '" target="_blank" class="rounded-lg px-2.5 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 text-slate-500 hover:bg-slate-100">Payslip</a>' +
             '</div></td>' +
             '</tr>';
     }

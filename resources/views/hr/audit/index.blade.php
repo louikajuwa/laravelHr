@@ -6,21 +6,21 @@
 
     <form data-list-filter action="{{ route('hr.audit.index') }}" method="GET"
           class="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-        <select name="action" class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
+        <select name="action" aria-label="Action" class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
             <option value="">All actions</option>
             @foreach ($actions as $a)
                 <option value="{{ $a }}" @selected(request('action') === $a)>{{ $a }}</option>
             @endforeach
         </select>
-        <select name="actor_id" class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
+        <select name="actor_id" aria-label="Actor" class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
             <option value="">All actors</option>
             @foreach ($actors as $actor)
                 <option value="{{ $actor->id }}" @selected(request('actor_id') == $actor->id)>{{ $actor->name }}</option>
             @endforeach
         </select>
-        <input type="date" name="from" value="{{ request('from') }}"
+        <input type="date" name="from" aria-label="From date" value="{{ request('from') }}"
                class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
-        <input type="date" name="to" value="{{ request('to') }}"
+        <input type="date" name="to" aria-label="To date" value="{{ request('to') }}"
                class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
     </form>
 
@@ -30,11 +30,11 @@
                 <table class="min-w-full divide-y divide-slate-100 text-sm">
                     <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                         <tr>
-                            <th class="px-5 py-3">Time</th>
-                            <th class="px-5 py-3">Actor</th>
-                            <th class="px-5 py-3">Action</th>
-                            <th class="px-5 py-3">Subject</th>
-                            <th class="px-5 py-3">Details</th>
+                            <th scope="col" class="px-5 py-3">Time</th>
+                            <th scope="col" class="px-5 py-3">Actor</th>
+                            <th scope="col" class="px-5 py-3">Action</th>
+                            <th scope="col" class="px-5 py-3">Subject</th>
+                            <th scope="col" class="px-5 py-3">Details</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100"></tbody>
@@ -54,15 +54,15 @@ window.HR.pageRenderer = {
         var changes = '';
         if (l.new_values) {
             changes = '<details class="mt-1"><summary class="cursor-pointer text-xs text-accent-600">changes</summary>' +
-                '<pre class="mt-1 max-w-md overflow-x-auto rounded bg-slate-50 p-2 text-[11px]">' +
+                '<pre class="mt-1 max-w-md overflow-x-auto whitespace-pre-wrap break-words rounded bg-slate-50 p-2 text-[11px]">' +
                 HR.esc(JSON.stringify(l.new_values, null, 2)) + '</pre></details>';
         }
         return '<tr class="hover:bg-slate-50/60 align-top">' +
             '<td class="px-5 py-3 text-slate-600 whitespace-nowrap">' + HR.epoch(l.created_epoch, 'MMM D, YYYY · h:mm A') + '</td>' +
             '<td class="px-5 py-3 text-slate-700">' + HR.esc(l.actor) + '</td>' +
-            '<td class="px-5 py-3">' + HR.badge('bg-slate-100 text-slate-600', HR.esc(l.action)) + '</td>' +
+            '<td class="px-5 py-3">' + HR.badge('bg-slate-100 text-slate-600', l.action) + '</td>' +
             '<td class="px-5 py-3 text-slate-600">' + subject + '</td>' +
-            '<td class="px-5 py-3 text-slate-600"><div>' + HR.esc(l.description || '') + '</div>' + changes + '</td>' +
+            '<td class="max-w-md break-words px-5 py-3 text-slate-600"><div class="break-words">' + HR.esc(l.description || '') + '</div>' + changes + '</td>' +
             '</tr>';
     }
 };

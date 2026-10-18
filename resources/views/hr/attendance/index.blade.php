@@ -11,21 +11,21 @@
     <form data-list-filter action="{{ route('hr.attendance.index') }}" method="GET"
           class="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
         <div class="relative flex-1 min-w-[200px]">
-            <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400"><x-icon name="search" class="h-4 w-4" /></span>
-            <input type="search" name="q" value="{{ request('q') }}" placeholder="Search name, email or code…"
+            <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500"><x-icon name="search" class="h-4 w-4" /></span>
+            <input type="search" name="q" aria-label="Search name, email or code" value="{{ request('q') }}" placeholder="Search name, email or code…"
                    class="block w-full rounded-xl border-slate-300 pl-9 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
         </div>
-        <input type="date" name="from" value="{{ $from }}"
+        <input type="date" name="from" aria-label="From date" value="{{ $from }}"
                class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
-        <input type="date" name="to" value="{{ $to }}"
+        <input type="date" name="to" aria-label="To date" value="{{ $to }}"
                class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
-        <select name="department_id" class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
+        <select name="department_id" aria-label="Department" class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
             <option value="">All departments</option>
             @foreach ($departments as $d)
                 <option value="{{ $d->id }}" @selected(request('department_id') == $d->id)>{{ $d->name }}</option>
             @endforeach
         </select>
-        <select name="status" class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
+        <select name="status" aria-label="Status" class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
             <option value="">All statuses</option>
             <option value="present" @selected(request('status') === 'present')>Present</option>
             <option value="late" @selected(request('status') === 'late')>Late</option>
@@ -42,14 +42,14 @@
                 <table class="min-w-full divide-y divide-slate-100 text-sm">
                     <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                         <tr>
-                            <th class="px-5 py-3">Date</th>
-                            <th class="px-5 py-3">Employee</th>
-                            <th class="px-5 py-3">Time In</th>
-                            <th class="px-5 py-3">Time Out</th>
-                            <th class="px-5 py-3">Status</th>
-                            <th class="px-5 py-3">Late</th>
-                            <th class="px-5 py-3">OT</th>
-                            <th class="px-5 py-3 text-right">Actions</th>
+                            <th scope="col" class="px-5 py-3">Date</th>
+                            <th scope="col" class="px-5 py-3">Employee</th>
+                            <th scope="col" class="px-5 py-3">Time In</th>
+                            <th scope="col" class="px-5 py-3">Time Out</th>
+                            <th scope="col" class="px-5 py-3">Status</th>
+                            <th scope="col" class="px-5 py-3">Late</th>
+                            <th scope="col" class="px-5 py-3">OT</th>
+                            <th scope="col" class="px-5 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100"></tbody>
@@ -78,14 +78,14 @@ window.HR.pageRenderer = {
         return '<tr class="hover:bg-slate-50/60">' +
             '<td class="px-5 py-3 text-slate-600">' + HR.epoch(r.date_epoch, 'MMM D, YYYY') + '</td>' +
             '<td class="px-5 py-3"><div class="font-medium text-slate-800">' + HR.esc(r.user_name) + '</div>' +
-            '<p class="text-xs text-slate-400">' + HR.esc(r.employee_code) + dept + '</p></td>' +
+            '<p class="text-xs text-slate-500">' + HR.esc(r.employee_code) + dept + '</p></td>' +
             '<td class="px-5 py-3 text-slate-600">' + HR.epoch(r.time_in_epoch, 'h:mm A') + '</td>' +
             '<td class="px-5 py-3 text-slate-600">' + HR.epoch(r.time_out_epoch, 'h:mm A') + '</td>' +
             '<td class="px-5 py-3">' + HR.badge(st.color, st.label) + '</td>' +
             '<td class="px-5 py-3 text-slate-600">' + (r.late_minutes ? r.late_minutes + 'm' : '—') + '</td>' +
             '<td class="px-5 py-3 text-slate-600">' + (r.overtime_minutes ? r.overtime_minutes + 'm' : '—') + '</td>' +
             '<td class="px-5 py-3"><div class="flex items-center justify-end">' +
-            '<a href="' + r.urls.edit + '" class="rounded-lg px-2.5 py-1 text-xs font-semibold text-accent-600 hover:bg-accent-50">Edit</a>' +
+            '<a href="' + r.urls.edit + '" class="rounded-lg px-2.5 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 text-accent-600 hover:bg-accent-50">Edit</a>' +
             '</div></td>' +
             '</tr>';
     }

@@ -11,8 +11,8 @@
     <form data-list-filter action="{{ route('hr.positions.index') }}" method="GET"
           class="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
         <div class="relative flex-1 min-w-[200px]">
-            <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400"><x-icon name="search" class="h-4 w-4" /></span>
-            <input type="search" name="q" value="{{ request('q') }}" placeholder="Search title…"
+            <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500"><x-icon name="search" class="h-4 w-4" /></span>
+            <input type="search" name="q" aria-label="Search title" value="{{ request('q') }}" placeholder="Search title…"
                    class="block w-full rounded-xl border-slate-300 pl-9 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
         </div>
     </form>
@@ -23,10 +23,10 @@
                 <table class="min-w-full divide-y divide-slate-100 text-sm">
                     <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                         <tr>
-                            <th class="px-5 py-3">Title</th>
-                            <th class="px-5 py-3">Department</th>
-                            <th class="px-5 py-3">Employees</th>
-                            <th class="px-5 py-3 text-right">Actions</th>
+                            <th scope="col" class="px-5 py-3">Title</th>
+                            <th scope="col" class="px-5 py-3">Department</th>
+                            <th scope="col" class="px-5 py-3">Employees</th>
+                            <th scope="col" class="px-5 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100"></tbody>
@@ -47,9 +47,9 @@ window.HR.pageRenderer = {
             '<td class="px-5 py-3 text-slate-600">' + HR.esc(p.department || '—') + '</td>' +
             '<td class="px-5 py-3 text-slate-600">' + p.employees_count + '</td>' +
             '<td class="px-5 py-3"><div class="flex items-center justify-end gap-1.5">' +
-            '<a href="' + p.urls.edit + '" class="rounded-lg px-2.5 py-1 text-xs font-semibold text-accent-600 hover:bg-accent-50">Edit</a>' +
+            '<a href="' + p.urls.edit + '" class="rounded-lg px-2.5 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 text-accent-600 hover:bg-accent-50">Edit</a>' +
             '<button type="button" data-delete-url="' + p.urls.destroy + '" data-delete-msg="Delete position \'' + HR.esc(p.title) + '\'?"' +
-            ' class="rounded-lg px-2.5 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50">Delete</button>' +
+            ' class="rounded-lg px-2.5 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 text-rose-600 hover:bg-rose-50">Delete</button>' +
             '</div></td>' +
             '</tr>';
     }

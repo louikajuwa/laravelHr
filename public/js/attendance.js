@@ -30,8 +30,16 @@
     // Lightweight toast.
     HR.toast = function (message, type) {
         var color = type === 'error' ? 'bg-rose-600' : 'bg-emerald-600';
+        var isError = type === 'error';
         var $t = $('<div class="fixed bottom-6 right-6 z-50 ' + color + ' text-white px-4 py-3 rounded-xl shadow-lg text-sm"></div>')
+            .attr('role', isError ? 'alert' : 'status')
             .text(message).appendTo('body');
-        setTimeout(function () { $t.fadeOut(300, function () { $t.remove(); }); }, 3000);
+        function dismiss() { $t.fadeOut(300, function () { $t.remove(); }); }
+        if (isError) {
+            // Errors persist until dismissed (click).
+            $t.attr('title', 'Click to dismiss').css('cursor', 'pointer').on('click', dismiss);
+        } else {
+            setTimeout(dismiss, 3000);
+        }
     };
 })(jQuery);

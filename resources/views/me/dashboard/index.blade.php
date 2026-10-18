@@ -11,7 +11,7 @@
                  data-clockin-url="{{ route('me.attendance.clock-in') }}"
                  data-clockout-url="{{ route('me.attendance.clock-out') }}"
                  class="text-center">
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+                <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
                     Local time · <span data-tz-label>local</span>
                 </p>
                 <p id="live-clock" class="mt-1 text-3xl font-bold text-slate-900">—</p>
@@ -66,7 +66,7 @@
                 <div class="flex items-center justify-between border-b border-slate-100 py-2.5 last:border-0">
                     <span class="text-sm text-slate-600">{{ $b->leaveType->name }}</span>
                     <span class="text-sm"><span class="font-bold text-slate-900">{{ rtrim(rtrim(number_format($b->available, 1), '0'), '.') }}</span>
-                        <span class="text-slate-400">/ {{ rtrim(rtrim(number_format($b->allocated, 1), '0'), '.') }} days</span></span>
+                        <span class="text-slate-500">/ {{ rtrim(rtrim(number_format($b->allocated, 1), '0'), '.') }} days</span></span>
                 </div>
             @empty
                 <x-empty message="No leave balances allocated yet." icon="tag" />
@@ -82,7 +82,7 @@
                 <div class="flex items-center justify-between border-b border-slate-100 py-2.5 last:border-0">
                     <div>
                         <p class="text-sm font-medium text-slate-700">{{ $lr->leaveType->name }}</p>
-                        <p class="text-xs text-slate-400">
+                        <p class="text-xs text-slate-500">
                             <span data-epoch="{{ $lr->start_date->timestamp }}" data-format="MMM D">{{ $lr->start_date->format('M d') }}</span>
                             – <span data-epoch="{{ $lr->end_date->timestamp }}" data-format="MMM D, YYYY">{{ $lr->end_date->format('M d, Y') }}</span>
                         </p>

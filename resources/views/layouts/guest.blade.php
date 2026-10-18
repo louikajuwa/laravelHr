@@ -18,6 +18,7 @@
     </script>
 </head>
 <body class="h-full bg-slate-950 font-sans text-slate-100 antialiased">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-accent-700 focus:outline-none focus:ring-2 focus:ring-accent-500">Skip to main content</a>
     <div class="flex min-h-full">
         {{-- Brand panel --}}
         <div class="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-accent-700 via-indigo-800 to-slate-900 p-12 lg:flex">
@@ -26,18 +27,18 @@
                 <span class="text-lg font-bold">{{ config('app.name') }}</span>
             </div>
             <div>
-                <h2 class="max-w-md text-3xl font-bold leading-tight">Attendance, leave & payroll — one lightweight HRIS.</h2>
+                <p class="max-w-md text-3xl font-bold leading-tight">Attendance, leave & payroll — one lightweight HRIS.</p>
                 <p class="mt-4 max-w-md text-sm text-indigo-100/80">Clock in, manage leave, and run payroll from a single dashboard. Times are shown in your local timezone.</p>
             </div>
-            <p class="text-xs text-indigo-200/60">&copy; {{ date('Y') }} {{ config('app.name') }}</p>
+            <p class="text-xs text-indigo-200/80">&copy; {{ date('Y') }} {{ config('app.name') }}</p>
         </div>
 
         {{-- Form panel --}}
-        <div class="flex w-full items-center justify-center px-6 py-12 lg:w-1/2">
+        <main id="main-content" tabindex="-1" class="flex w-full items-center justify-center px-6 py-12 focus:outline-none lg:w-1/2">
             <div class="w-full max-w-sm">
                 @yield('content')
             </div>
-        </div>
+        </main>
     </div>
 </body>
 </html>

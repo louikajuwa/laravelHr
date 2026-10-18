@@ -12,7 +12,7 @@
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div class="space-y-6 lg:col-span-2">
             <x-card title="Earnings">
-                <table class="min-w-full text-sm">
+                <div class="overflow-x-auto"><table class="min-w-full text-sm">
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($payroll->items->where('type', 'earning') as $item)
                             <tr>
@@ -20,14 +20,14 @@
                                 <td class="py-2.5 text-right font-medium text-slate-800">{{ number_format($item->amount, 2) }}</td>
                             </tr>
                         @empty
-                            <tr><td class="py-2.5 text-slate-400">No earnings recorded.</td></tr>
+                            <tr><td class="py-2.5 text-slate-500">No earnings recorded.</td></tr>
                         @endforelse
                     </tbody>
-                </table>
+                </table></div>
             </x-card>
 
             <x-card title="Deductions">
-                <table class="min-w-full text-sm">
+                <div class="overflow-x-auto"><table class="min-w-full text-sm">
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($payroll->items->where('type', 'deduction') as $item)
                             <tr>
@@ -35,10 +35,10 @@
                                 <td class="py-2.5 text-right font-medium text-rose-600">-{{ number_format($item->amount, 2) }}</td>
                             </tr>
                         @empty
-                            <tr><td class="py-2.5 text-slate-400">No deductions recorded.</td></tr>
+                            <tr><td class="py-2.5 text-slate-500">No deductions recorded.</td></tr>
                         @endforelse
                     </tbody>
-                </table>
+                </table></div>
             </x-card>
         </div>
 

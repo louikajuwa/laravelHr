@@ -18,13 +18,13 @@
         'dot' => 'M12 12h.01',
     ];
     $d = $paths[$icon] ?? $paths['dot'];
-    $base = 'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition';
+    $base = 'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
     $on = 'bg-white/10 text-white shadow-inner';
     $off = 'text-slate-300/80 hover:bg-white/5 hover:text-white';
 @endphp
 
-<a href="{{ $href }}" class="{{ $base }} {{ $active ? $on : $off }}">
-    <svg class="h-5 w-5 shrink-0 {{ $active ? 'text-accent-400' : 'text-slate-400 group-hover:text-slate-200' }}"
+<a href="{{ $href }}" @if ($active) aria-current="page" @endif class="{{ $base }} {{ $active ? $on : $off }}">
+    <svg aria-hidden="true" class="h-5 w-5 shrink-0 {{ $active ? 'text-accent-400' : 'text-slate-400 group-hover:text-slate-200' }}"
          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
         <path stroke-linecap="round" stroke-linejoin="round" d="{{ $d }}" />
     </svg>

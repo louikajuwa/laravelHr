@@ -6,7 +6,7 @@
         Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
         Chart.defaults.color = '#64748b';
 
-        $.getJSON($root.data('metrics-url'), function (m) {
+        $.getJSON($root.data('metrics-url')).done(function (m) {
             // Today donut
             var donut = document.getElementById('chart-today');
             if (donut) {
@@ -56,6 +56,10 @@
                     options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
                 });
             }
+        }).fail(function () {
+            $root.find('canvas').each(function () {
+                $(this).replaceWith('<p role="alert" class="py-10 text-center text-sm text-rose-600">Could not load chart data. Please refresh the page.</p>');
+            });
         });
     });
 })(jQuery);

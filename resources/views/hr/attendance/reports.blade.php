@@ -14,7 +14,7 @@
 
     <div class="mb-4 flex flex-wrap items-center gap-2">
         @foreach ($periods as $key => $name)
-            <a href="{{ route('hr.attendance.reports', array_merge(['period' => $key], $qs)) }}"
+            <a href="{{ route('hr.attendance.reports', array_merge(['period' => $key], $qs)) }}" @if ($period === $key) aria-current="page" @endif
                class="rounded-full px-4 py-1.5 text-sm font-semibold transition {{ $period === $key ? 'bg-accent-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50' }}">
                 {{ $name }}
             </a>
@@ -49,13 +49,13 @@
             <table class="min-w-full divide-y divide-slate-100 text-sm">
                 <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                     <tr>
-                        <th class="px-5 py-3">Date</th>
-                        <th class="px-5 py-3">Employee</th>
-                        <th class="px-5 py-3">Time In</th>
-                        <th class="px-5 py-3">Time Out</th>
-                        <th class="px-5 py-3">Status</th>
-                        <th class="px-5 py-3">Late</th>
-                        <th class="px-5 py-3">OT</th>
+                        <th scope="col" class="px-5 py-3">Date</th>
+                        <th scope="col" class="px-5 py-3">Employee</th>
+                        <th scope="col" class="px-5 py-3">Time In</th>
+                        <th scope="col" class="px-5 py-3">Time Out</th>
+                        <th scope="col" class="px-5 py-3">Status</th>
+                        <th scope="col" class="px-5 py-3">Late</th>
+                        <th scope="col" class="px-5 py-3">OT</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -66,7 +66,7 @@
                             </td>
                             <td class="px-5 py-3">
                                 <div class="font-medium text-slate-800">{{ $r->user->name }}</div>
-                                <p class="text-xs text-slate-400">{{ $r->user->employee_code }}@if($r->user->department) · {{ $r->user->department->name }}@endif</p>
+                                <p class="text-xs text-slate-500">{{ $r->user->employee_code }}@if($r->user->department) · {{ $r->user->department->name }}@endif</p>
                             </td>
                             <td class="px-5 py-3 text-slate-600">
                                 @if ($r->time_in)

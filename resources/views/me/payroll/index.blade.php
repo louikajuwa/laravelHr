@@ -10,12 +10,12 @@
                 <table class="min-w-full divide-y divide-slate-100 text-sm">
                     <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                         <tr>
-                            <th class="px-5 py-3">Period</th>
-                            <th class="px-5 py-3">Gross</th>
-                            <th class="px-5 py-3">Deductions</th>
-                            <th class="px-5 py-3">Net Pay</th>
-                            <th class="px-5 py-3">Status</th>
-                            <th class="px-5 py-3 text-right">Actions</th>
+                            <th scope="col" class="px-5 py-3">Period</th>
+                            <th scope="col" class="px-5 py-3">Gross</th>
+                            <th scope="col" class="px-5 py-3">Deductions</th>
+                            <th scope="col" class="px-5 py-3">Net Pay</th>
+                            <th scope="col" class="px-5 py-3">Status</th>
+                            <th scope="col" class="px-5 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100"></tbody>
@@ -47,8 +47,8 @@ window.HR.pageRenderer = {
             '<td class="px-5 py-3 font-bold text-slate-900">' + HR.esc(p.net_pay) + '</td>' +
             '<td class="px-5 py-3">' + HR.badge(st.color, st.label) + '</td>' +
             '<td class="px-5 py-3"><div class="flex items-center justify-end gap-1.5">' +
-            '<a href="' + p.urls.show + '" class="rounded-lg px-2.5 py-1 text-xs font-semibold text-accent-600 hover:bg-accent-50">View</a>' +
-            '<a href="' + p.urls.payslip + '" target="_blank" class="rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100">PDF</a>' +
+            '<a href="' + p.urls.show + '" class="rounded-lg px-2.5 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 text-accent-600 hover:bg-accent-50">View</a>' +
+            '<a href="' + p.urls.payslip + '" target="_blank" class="rounded-lg px-2.5 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 text-slate-500 hover:bg-slate-100">PDF</a>' +
             '</div></td>' +
             '</tr>';
     }

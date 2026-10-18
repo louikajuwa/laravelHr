@@ -15,16 +15,16 @@
 
         <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <x-card title="Attendance Trend" subtitle="Last 30 days" class="lg:col-span-2">
-                <canvas id="chart-trend" height="120"></canvas>
+                <canvas id="chart-trend" height="120" role="img" aria-label="Line chart of present, late and absent employee counts per day over the last 30 days"></canvas>
             </x-card>
             <x-card title="Today" subtitle="Live attendance split">
-                <canvas id="chart-today" height="200"></canvas>
+                <canvas id="chart-today" height="200" role="img" aria-label="Doughnut chart of today's attendance split: present, late, on leave and absent"></canvas>
             </x-card>
         </div>
 
         <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <x-card title="Approved Leave by Type" class="lg:col-span-2">
-                <canvas id="chart-leave" height="110"></canvas>
+                <canvas id="chart-leave" height="110" role="img" aria-label="Bar chart of approved leave days by leave type"></canvas>
             </x-card>
 
             <x-card title="Pending Actions">
@@ -43,7 +43,7 @@
                     </li>
                 </ul>
 
-                <p class="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-slate-400">Headcount by Department</p>
+                <p class="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-slate-500">Headcount by Department</p>
                 <ul class="space-y-1.5">
                     @foreach ($headcount['by_department'] as $row)
                         <li class="flex items-center justify-between text-sm">

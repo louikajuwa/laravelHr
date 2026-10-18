@@ -10,7 +10,7 @@
 
     <form data-list-filter action="{{ route('me.attendance.index') }}" method="GET"
           class="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-        <input type="month" name="month" value="{{ $month }}"
+        <input type="month" name="month" aria-label="Month" value="{{ $month }}"
                class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
     </form>
 
@@ -20,12 +20,12 @@
                 <table class="min-w-full divide-y divide-slate-100 text-sm">
                     <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                         <tr>
-                            <th class="px-5 py-3">Date</th>
-                            <th class="px-5 py-3">Time In</th>
-                            <th class="px-5 py-3">Time Out</th>
-                            <th class="px-5 py-3">Status</th>
-                            <th class="px-5 py-3">Late</th>
-                            <th class="px-5 py-3">OT</th>
+                            <th scope="col" class="px-5 py-3">Date</th>
+                            <th scope="col" class="px-5 py-3">Time In</th>
+                            <th scope="col" class="px-5 py-3">Time Out</th>
+                            <th scope="col" class="px-5 py-3">Status</th>
+                            <th scope="col" class="px-5 py-3">Late</th>
+                            <th scope="col" class="px-5 py-3">OT</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100"></tbody>

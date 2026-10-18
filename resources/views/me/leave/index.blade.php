@@ -10,7 +10,7 @@
 
     <form data-list-filter action="{{ route('me.leave.index') }}" method="GET"
           class="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-        <select name="status" class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
+        <select name="status" aria-label="Status" class="rounded-xl border-slate-300 text-sm shadow-sm focus:border-accent-500 focus:ring-accent-500">
             <option value="">All statuses</option>
             <option value="pending" @selected(request('status') === 'pending')>Pending</option>
             <option value="approved" @selected(request('status') === 'approved')>Approved</option>
@@ -25,11 +25,11 @@
                 <table class="min-w-full divide-y divide-slate-100 text-sm">
                     <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                         <tr>
-                            <th class="px-5 py-3">Type</th>
-                            <th class="px-5 py-3">Dates</th>
-                            <th class="px-5 py-3">Days</th>
-                            <th class="px-5 py-3">Status</th>
-                            <th class="px-5 py-3 text-right">Actions</th>
+                            <th scope="col" class="px-5 py-3">Type</th>
+                            <th scope="col" class="px-5 py-3">Dates</th>
+                            <th scope="col" class="px-5 py-3">Days</th>
+                            <th scope="col" class="px-5 py-3">Status</th>
+                            <th scope="col" class="px-5 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100"></tbody>
@@ -52,11 +52,11 @@ window.HR.pageRenderer = {
     cols: 5,
     row: function(r) {
         var st = LEAVE_STATUS[r.status] || { color: 'bg-slate-100 text-slate-600', label: r.status };
-        var reason = r.reason ? '<p class="text-xs text-slate-400">' + HR.esc(r.reason.length > 60 ? r.reason.slice(0,60) + '…' : r.reason) + '</p>' : '';
+        var reason = r.reason ? '<p class="text-xs text-slate-500">' + HR.esc(r.reason.length > 60 ? r.reason.slice(0,60) + '…' : r.reason) + '</p>' : '';
         var actions = r.status === 'pending'
             ? '<button type="button" data-cancel-url="' + r.urls.cancel + '"' +
-              ' class="rounded-lg px-2.5 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50">Cancel</button>'
-            : '<span class="text-slate-400">—</span>';
+              ' class="rounded-lg px-2.5 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 text-rose-600 hover:bg-rose-50">Cancel</button>'
+            : '<span class="text-slate-500">—</span>';
         return '<tr class="hover:bg-slate-50/60">' +
             '<td class="px-5 py-3"><div class="font-medium text-slate-800">' + HR.esc(r.leave_type) + '</div>' + reason + '</td>' +
             '<td class="px-5 py-3 text-slate-600">' +
@@ -75,10 +75,7 @@ $(document).on('click', '[data-cancel-url]', function() {
         confirmText: 'Cancel Request',
         confirmClass: 'bg-rose-600 hover:bg-rose-700',
         onConfirm: function() {
-            var $form = $('<form method="POST" action="' + url + '" style="display:none">');
-            $form.append('<input type="hidden" name="_token" value="' + $('meta[name=csrf-token]').attr('content') + '">');
-            $('body').append($form);
-            $form.submit();
+            HR.postForm(url);
         }
     });
 });

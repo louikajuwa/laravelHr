@@ -27,6 +27,6 @@
     $d = $paths[$name] ?? $paths['dot'];
 @endphp
 
-<svg {{ $attributes->merge(['class' => 'h-5 w-5']) }} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
+<svg aria-hidden="true" {{ $attributes->merge(['class' => 'h-5 w-5']) }} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
     <path stroke-linecap="round" stroke-linejoin="round" d="{{ $d }}" />
 </svg>

@@ -8,7 +8,7 @@
         'success' => 'bg-emerald-600 text-white hover:bg-emerald-700',
         'ghost' => 'text-slate-600 hover:bg-slate-100',
     ];
-    $cls = 'inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold transition disabled:opacity-50 '.($variants[$variant] ?? $variants['primary']);
+    $cls = 'inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 disabled:opacity-50 '.($variants[$variant] ?? $variants['primary']);
 @endphp
 
 @if ($href)
