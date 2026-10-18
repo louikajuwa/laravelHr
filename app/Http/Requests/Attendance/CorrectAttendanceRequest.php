@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Attendance;
 
 use App\Models\Attendance;
-use Carbon\Carbon;
+use App\Support\BusinessTime;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,7 +26,7 @@ class CorrectAttendanceRequest extends FormRequest
 
         return [
             'time_in' => ['nullable', 'date', function ($attr, $value, $fail) use ($date) {
-                if ($date && ! Carbon::parse($value)->isSameDay($date)) {
+                if ($date && BusinessTime::parse($value)->toDateString() !== $date->toDateString()) {
                     $fail('The time in must be on the attendance date ('.$date->toDateString().').');
                 }
             }],
@@ -42,8 +42,8 @@ class CorrectAttendanceRequest extends FormRequest
                     if (! $date) {
                         return;
                     }
-                    $out = Carbon::parse($value);
-                    $ok = $out->isSameDay($date) || ($overnight && $out->isSameDay($date->copy()->addDay()));
+                    $outDate = BusinessTime::parse($value)->toDateString();
+                    $ok = $outDate === $date->toDateString() || ($overnight && $outDate === $date->copy()->addDay()->toDateString());
                     if (! $ok) {
                         $fail('The time out must be on the attendance date'.($overnight ? ' or the following day.' : '.'));
                     }

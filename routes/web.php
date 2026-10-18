@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\HR;
 use App\Http\Controllers\Me;
 use Illuminate\Support\Facades\Auth;
@@ -12,6 +13,11 @@ Route::get('/', fn () => redirect()->route(Auth::check() ? 'dashboard' : 'login'
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+
+    Route::get('forgot-password', [PasswordResetController::class, 'showForgot'])->name('password.request');
+    Route::post('forgot-password', [PasswordResetController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('password.email');
+    Route::get('reset-password/{token}', [PasswordResetController::class, 'showReset'])->name('password.reset');
+    Route::post('reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:5,1')->name('password.update');
 });
 Route::post('logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
@@ -42,6 +48,7 @@ Route::middleware(['auth', 'active', 'role:admin'])->prefix('hr')->name('hr.')->
     Route::get('leave', [HR\LeaveRequestController::class, 'index'])->name('leave.index');
     Route::post('leave/{leaveRequest}/approve', [HR\LeaveRequestController::class, 'approve'])->name('leave.approve');
     Route::post('leave/{leaveRequest}/reject', [HR\LeaveRequestController::class, 'reject'])->name('leave.reject');
+    Route::post('leave/{leaveRequest}/revoke', [HR\LeaveRequestController::class, 'revoke'])->name('leave.revoke');
     Route::resource('leave-types', HR\LeaveTypeController::class)->parameters(['leave-types' => 'leaveType'])->except('show');
 
     Route::get('late-arrivals', [HR\LateArrivalController::class, 'index'])->name('late-arrivals.index');

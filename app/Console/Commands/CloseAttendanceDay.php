@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Attendance;
 use App\Models\LeaveRequest;
 use App\Models\User;
+use App\Support\BusinessTime;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
@@ -17,7 +18,7 @@ class CloseAttendanceDay extends Command
     public function handle(): int
     {
         $input = $this->argument('date') ?: $this->option('date');
-        $date = $input ? Carbon::parse($input) : now()->subDay();
+        $date = $input ? Carbon::parse($input) : BusinessTime::today()->subDay();
         $dateStr = $date->toDateString();
         $created = 0;
 

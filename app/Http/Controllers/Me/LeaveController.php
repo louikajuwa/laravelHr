@@ -7,6 +7,7 @@ use App\Http\Requests\Leave\StoreLeaveRequest;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Services\LeaveService;
+use App\Support\BusinessTime;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -47,7 +48,7 @@ class LeaveController extends Controller
     {
         return view('me.leave.create', [
             'types' => LeaveType::where('is_active', true)->orderBy('name')->get(),
-            'balances' => $request->user()->leaveBalances()->where('year', now()->year)->get()->keyBy('leave_type_id'),
+            'balances' => $request->user()->leaveBalances()->where('year', BusinessTime::today()->year)->get()->keyBy('leave_type_id'),
         ]);
     }
 
@@ -78,7 +79,7 @@ class LeaveController extends Controller
     public function balances(Request $request): View
     {
         return view('me.leave.balances', [
-            'balances' => $request->user()->leaveBalances()->with('leaveType:id,name,code')->where('year', now()->year)->get(),
+            'balances' => $request->user()->leaveBalances()->with('leaveType:id,name,code')->where('year', BusinessTime::today()->year)->get(),
         ]);
     }
 
@@ -86,7 +87,7 @@ class LeaveController extends Controller
     {
         $balance = $request->user()->leaveBalances()
             ->where('leave_type_id', $request->integer('leave_type_id'))
-            ->where('year', now()->year)->first();
+            ->where('year', BusinessTime::today()->year)->first();
 
         return response()->json([
             'available' => $balance?->available ?? 0,

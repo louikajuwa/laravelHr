@@ -9,6 +9,12 @@
     <h1 class="text-2xl font-bold text-white">Welcome back</h1>
     <p class="mt-1 text-sm text-slate-300">Sign in to your HR account.</p>
 
+    @if (session('status'))
+        <div role="status" class="mt-5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+            {{ session('status') }}
+        </div>
+    @endif
+
     @if ($errors->any())
         <div role="alert" class="mt-5 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
             {{ $errors->first() }}
@@ -25,7 +31,10 @@
                    placeholder="you@company.com">
         </div>
         <div>
-            <label for="password" class="mb-1 block text-sm font-medium text-slate-300">Password</label>
+            <div class="mb-1 flex items-center justify-between">
+                <label for="password" class="block text-sm font-medium text-slate-300">Password</label>
+                <a href="{{ route('password.request') }}" class="text-sm text-accent-500 hover:underline">Forgot password?</a>
+            </div>
             <input id="password" name="password" type="password" required autocomplete="current-password"
                    class="block w-full rounded-xl border-0 bg-slate-800 px-3.5 py-2.5 text-sm text-white shadow-sm ring-1 ring-inset ring-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-accent-500"
                    placeholder="••••••••">

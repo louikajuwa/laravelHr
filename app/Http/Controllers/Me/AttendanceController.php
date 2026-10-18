@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Me;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Services\AttendanceService;
+use App\Support\BusinessTime;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +19,7 @@ class AttendanceController extends Controller
     public function index(Request $request): View|JsonResponse
     {
         $month = $request->query('month');
-        $month = is_string($month) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month) ? $month : now()->format('Y-m');
+        $month = is_string($month) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month) ? $month : BusinessTime::today()->format('Y-m');
         $start = Carbon::parse($month.'-01')->startOfMonth();
         $end = $start->copy()->endOfMonth();
 

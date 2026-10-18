@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\BusinessTime;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -38,12 +39,12 @@ class Shift extends Model
 
     public function expectedStart(Carbon $date): Carbon
     {
-        return Carbon::parse($date->toDateString().' '.$this->start_time);
+        return Carbon::parse($date->toDateString().' '.$this->start_time, BusinessTime::tz());
     }
 
     public function expectedEnd(Carbon $date): Carbon
     {
-        $end = Carbon::parse($date->toDateString().' '.$this->end_time);
+        $end = Carbon::parse($date->toDateString().' '.$this->end_time, BusinessTime::tz());
 
         return $this->crossesMidnight() ? $end->addDay() : $end;
     }

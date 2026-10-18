@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Attendance;
 use App\Models\Shift;
 use App\Models\User;
+use App\Support\BusinessTime;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -15,7 +16,7 @@ class AttendanceService
 
     public function clockIn(User $user, ?Carbon $at = null): Attendance
     {
-        $at = $at ?: now();
+        $at = $at ? BusinessTime::local($at) : BusinessTime::now();
         $date = $at->toDateString();
 
         $attendance = Attendance::firstOrNew(['user_id' => $user->id, 'date' => $date]);
@@ -27,7 +28,7 @@ class AttendanceService
         $shift = $user->effectiveShift();
         $wasOnLeave = $attendance->exists && $attendance->status === 'on_leave';
         $attendance->shift_id = $shift?->id;
-        $attendance->time_in = $at;
+        $attendance->time_in = BusinessTime::toStorage($at);
         $attendance->source = 'web_clock';
         if ($wasOnLeave) {
             // Employee showed up on an approved-leave day: allow it, but keep a trace in remarks.
@@ -48,7 +49,7 @@ class AttendanceService
 
     public function clockOut(User $user, ?Carbon $at = null): Attendance
     {
-        $at = $at ?: now();
+        $at = $at ? BusinessTime::local($at) : BusinessTime::now();
         $date = $at->toDateString();
 
         $attendance = Attendance::where('user_id', $user->id)->where('date', $date)->first();
@@ -71,7 +72,7 @@ class AttendanceService
             throw new RuntimeException('You have already clocked out today.');
         }
 
-        $attendance->time_out = $at;
+        $attendance->time_out = BusinessTime::toStorage($at);
         $this->applyDurations($attendance, $attendance->shift);
         $attendance->save();
 
@@ -100,7 +101,7 @@ class AttendanceService
                 }
                 $new = $changes[$field] ?: null;
                 if ($new !== null && in_array($field, ['time_in', 'time_out'], true)) {
-                    $new = Carbon::parse($new);
+                    $new = BusinessTime::toStorage(BusinessTime::parse((string) $new));
                 }
                 $old = $attendance->$field;
                 $oldStr = $old instanceof Carbon ? $old->toDateTimeString() : (string) $old;
