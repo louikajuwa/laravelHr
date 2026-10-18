@@ -27,7 +27,7 @@
     </x-field>
     <x-field label="Pay Frequency" name="pay_frequency" :required="true">
         <x-select name="pay_frequency">
-            @foreach (['monthly' => 'Monthly', 'biweekly' => 'Biweekly'] as $k => $v)
+            @foreach (['monthly' => 'Monthly', 'biweekly' => 'Semi-monthly (1–15, 16–end)'] as $k => $v)
                 <option value="{{ $k }}" @selected(old('pay_frequency', $s?->pay_frequency) == $k)>{{ $v }}</option>
             @endforeach
         </x-select>
@@ -45,8 +45,8 @@
     </x-field>
     <x-field label="Absence Deduction Mode" name="absence_deduction_mode">
         <x-select name="absence_deduction_mode">
-            @foreach (['daily_rate' => 'Daily rate', 'fixed' => 'Fixed'] as $k => $v)
-                <option value="{{ $k }}" @selected(old('absence_deduction_mode', $s?->absence_deduction_mode) == $k)>{{ $v }}</option>
+            @foreach (['daily_rate' => 'Daily rate'] as $k => $v)
+                <option value="{{ $k }}" @selected(old('absence_deduction_mode', 'daily_rate') == $k)>{{ $v }}</option>
             @endforeach
         </x-select>
     </x-field>

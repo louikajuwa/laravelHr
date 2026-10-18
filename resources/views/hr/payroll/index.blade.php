@@ -18,7 +18,7 @@
                   data-confirm="Generate payroll for the selected period and department?" data-confirm-text="Generate" data-confirm-class="bg-accent-600 hover:bg-accent-700">
                 @csrf
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <p class="text-xs text-slate-500 sm:col-span-2">Payroll periods must cover one full calendar month (1st to last day).</p>
+                    <p class="text-xs text-slate-500 sm:col-span-2">Monthly staff: full month. Semi-monthly staff: 1–15 or 16–end.</p>
                     <x-field label="Period Start" name="period_start" :required="true">
                         <x-input name="period_start" type="date" value="{{ old('period_start', now()->startOfMonth()->format('Y-m-d')) }}" required />
                     </x-field>

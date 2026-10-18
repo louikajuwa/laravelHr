@@ -75,7 +75,8 @@ class PayrollController extends Controller
 
         $result = $this->payroll->generateBatch($start, $end, $request->user(), $request->input('department_id'));
 
-        $msg = "Payroll: {$result['generated']} generated, {$result['skipped']} skipped.";
+        $msg = "Payroll: {$result['generated']} generated, {$result['skipped']} skipped";
+        $msg .= $result['mismatched'] ? " ({$result['mismatched']} on a different pay frequency)." : '.';
         if ($result['failed']) {
             return back()->with('status', $msg)->withErrors(['payroll' => implode(' | ', $result['failed'])]);
         }

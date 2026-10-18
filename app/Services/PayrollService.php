@@ -7,6 +7,7 @@ use App\Models\LateArrivalReport;
 use App\Models\LeaveRequest;
 use App\Models\Payroll;
 use App\Models\User;
+use App\Support\BusinessTime;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,8 @@ use RuntimeException;
 
 class PayrollService
 {
+    public const CODE_FREQUENCY_MISMATCH = 422;
+
     public function __construct(private AuditLogger $audit) {}
 
     public function generate(User $user, Carbon $start, Carbon $end, User $hr): Payroll
@@ -24,6 +27,19 @@ class PayrollService
         if (! $structure) {
             throw new RuntimeException("No active salary structure for {$user->name}.");
         }
+
+        $isFullMonth = $start->day === 1 && $end->isSameDay($start->copy()->endOfMonth());
+        if ($structure->pay_frequency === 'biweekly' && $isFullMonth) {
+            throw new RuntimeException("{$user->name} is paid semi-monthly; generate 1–15 or 16–end.", self::CODE_FREQUENCY_MISMATCH);
+        }
+        if ($structure->pay_frequency !== 'biweekly' && ! $isFullMonth) {
+            throw new RuntimeException("{$user->name} is paid monthly; generate a full-month period.", self::CODE_FREQUENCY_MISMATCH);
+        }
+        // Monthly-denominated amounts (basic, allowances, perfect bonus) are halved for semi-monthly periods.
+        $factor = $isFullMonth ? 1.0 : 0.5;
+        $label = $isFullMonth
+            ? $start->format('M Y')
+            : $start->format('M Y').' ('.($start->day === 1 ? '1–15' : '16–'.$end->day).')';
 
         $shift = $user->effectiveShift();
         $dailyRate = $structure->dailyRate();
@@ -41,7 +57,7 @@ class PayrollService
 
         $daysPresent = $daysAbsent = $lateMinutes = $overtimeMinutes = 0;
 
-        $today = Carbon::today();
+        $today = BusinessTime::today();
         $hireDate = $user->hire_date?->copy()->startOfDay();
 
         for ($d = $start->copy(); $d->lessThanOrEqualTo($end); $d->addDay()) {
@@ -87,7 +103,7 @@ class PayrollService
         }
 
         // --- Compute ---
-        $basic = round((float) $structure->basic_salary, 2);
+        $basic = round((float) $structure->basic_salary * $factor, 2);
         $overtimePay = round($overtimeMinutes * $minuteRate * (float) $structure->overtime_rate_multiplier, 2);
 
         $lateRate = (float) $structure->late_deduction_per_minute ?: $minuteRate;
@@ -96,10 +112,10 @@ class PayrollService
         $unpaidLeaveDeduction = round($unpaidLeaveDays * $dailyRate, 2);
 
         $allowances = collect($structure->allowances ?? []);
-        $allowancesTotal = round($allowances->sum(fn ($a) => (float) ($a['amount'] ?? 0)), 2);
+        $allowancesTotal = round($allowances->sum(fn ($a) => (float) ($a['amount'] ?? 0)) * $factor, 2);
 
         $perfect = ($daysAbsent == 0 && $lateMinutes === 0 && $unpaidLeaveDays === 0)
-            ? round((float) $structure->perfect_attendance_bonus, 2) : 0.0;
+            ? round((float) $structure->perfect_attendance_bonus * $factor, 2) : 0.0;
         $bonuses = $perfect;
 
         $gross = round($basic + $overtimePay + $bonuses + $allowancesTotal, 2);
@@ -111,7 +127,7 @@ class PayrollService
             $user, $hr, $start, $end, $basic, $overtimePay, $bonuses, $allowancesTotal, $gross,
             $lateDeduction, $absenceDeduction, $unpaidLeaveDeduction, $deductionsTotal, $netPay,
             $daysPresent, $daysAbsent, $lateMinutes, $overtimeMinutes, $paidLeaveDays, $unpaidLeaveDays,
-            $allowances, $perfect
+            $allowances, $perfect, $label, $factor
         ) {
             // Serialize per employee and re-check overlap inside the transaction.
             User::withTrashed()->whereKey($user->id)->lockForUpdate()->first();
@@ -121,7 +137,7 @@ class PayrollService
                 'user_id' => $user->id,
                 'period_start' => $start->toDateString(),
                 'period_end' => $end->toDateString(),
-                'label' => $start->format('M Y'),
+                'label' => $label,
                 'basic' => $basic,
                 'overtime_pay' => $overtimePay,
                 'bonuses' => $bonuses,
@@ -152,7 +168,7 @@ class PayrollService
                 ['type' => 'earning', 'code' => 'overtime', 'label' => "Overtime ({$overtimeMinutes} min)", 'amount' => $overtimePay],
             ];
             foreach ($allowances as $a) {
-                $items[] = ['type' => 'earning', 'code' => 'allowance', 'label' => $a['name'] ?? 'Allowance', 'amount' => round((float) ($a['amount'] ?? 0), 2)];
+                $items[] = ['type' => 'earning', 'code' => 'allowance', 'label' => $a['name'] ?? 'Allowance', 'amount' => round((float) ($a['amount'] ?? 0) * $factor, 2)];
             }
             if ($perfect > 0) {
                 $items[] = ['type' => 'earning', 'code' => 'bonus_perfect', 'label' => 'Perfect Attendance Bonus', 'amount' => $perfect];
@@ -174,7 +190,7 @@ class PayrollService
     }
 
     /**
-     * @return array{generated:int, skipped:int, failed:array<int,string>}
+     * @return array{generated:int, skipped:int, mismatched:int, skipped_reasons:array<int,string>, failed:array<int,string>}
      */
     public function generateBatch(Carbon $start, Carbon $end, User $hr, ?int $departmentId = null): array
     {
@@ -185,6 +201,8 @@ class PayrollService
 
         $generated = 0;
         $skipped = 0;
+        $mismatched = 0;
+        $skippedReasons = [];
         $failed = [];
 
         foreach ($query->get() as $user) {
@@ -195,7 +213,11 @@ class PayrollService
                 // Unique-constraint race: another request created this payroll first.
                 $skipped++;
             } catch (RuntimeException $e) {
-                if (str_contains($e->getMessage(), 'already exists')) {
+                if ($e->getCode() === self::CODE_FREQUENCY_MISMATCH) {
+                    $skipped++;
+                    $mismatched++;
+                    $skippedReasons[] = $e->getMessage();
+                } elseif (str_contains($e->getMessage(), 'already exists')) {
                     $skipped++;
                 } else {
                     $failed[] = "{$user->name}: {$e->getMessage()}";
@@ -203,7 +225,7 @@ class PayrollService
             }
         }
 
-        return ['generated' => $generated, 'skipped' => $skipped, 'failed' => $failed];
+        return ['generated' => $generated, 'skipped' => $skipped, 'mismatched' => $mismatched, 'skipped_reasons' => $skippedReasons, 'failed' => $failed];
     }
 
     public function finalize(Payroll $payroll): Payroll

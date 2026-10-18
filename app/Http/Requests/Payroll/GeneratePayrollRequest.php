@@ -34,8 +34,13 @@ class GeneratePayrollRequest extends FormRequest
             }
             $start = Carbon::parse($this->input('period_start'))->startOfDay();
             $end = Carbon::parse($this->input('period_end'))->startOfDay();
-            if (! $start->isSameDay($start->copy()->startOfMonth()) || ! $end->isSameDay($start->copy()->endOfMonth())) {
-                $validator->errors()->add('period_end', 'A payroll period must be exactly one full calendar month (from the 1st to the last day of the same month).');
+            $monthStart = $start->copy()->startOfMonth();
+            $monthEnd = $start->copy()->endOfMonth();
+            $fullMonth = $start->isSameDay($monthStart) && $end->isSameDay($monthEnd);
+            $firstHalf = $start->isSameDay($monthStart) && $end->isSameDay($monthStart->copy()->day(15));
+            $secondHalf = $start->isSameDay($monthStart->copy()->day(16)) && $end->isSameDay($monthEnd);
+            if (! $fullMonth && ! $firstHalf && ! $secondHalf) {
+                $validator->errors()->add('period_end', 'A payroll period must be a full calendar month (1st to last day), or a half of one within the same month (1st-15th or 16th-last day).');
             }
         }];
     }
