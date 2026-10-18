@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LateArrivalReport;
 use App\Services\AuditLogger;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -13,7 +14,7 @@ class LateArrivalController extends Controller
 {
     public function __construct(private AuditLogger $audit) {}
 
-    public function index(Request $request): View|\Illuminate\Http\JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
         $reports = LateArrivalReport::query()
             ->with(['user:id,name,employee_code', 'reviewer:id,name'])
@@ -23,15 +24,15 @@ class LateArrivalController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'data' => $reports->getCollection()->map(fn ($r) => [
-                    'id'            => $r->id,
-                    'date_epoch'    => $r->date->timestamp,
-                    'user_name'     => $r->user->name,
+                    'id' => $r->id,
+                    'date_epoch' => $r->date->timestamp,
+                    'user_name' => $r->user->name,
                     'employee_code' => $r->user->employee_code,
-                    'late_minutes'  => $r->late_minutes,
-                    'reason'        => $r->reason,
-                    'status'        => $r->status,
-                    'reviewer'      => $r->reviewer?->name,
-                    'urls'          => ['review' => route('hr.late-arrivals.review', $r)],
+                    'late_minutes' => $r->late_minutes,
+                    'reason' => $r->reason,
+                    'status' => $r->status,
+                    'reviewer' => $r->reviewer?->name,
+                    'urls' => ['review' => route('hr.late-arrivals.review', $r)],
                 ]),
                 'pagination' => $this->paginationMeta($reports),
             ]);
@@ -45,6 +46,10 @@ class LateArrivalController extends Controller
         $data = $request->validate([
             'status' => ['required', 'in:accepted,excused,rejected'],
         ]);
+
+        if ($report->status !== 'pending') {
+            return back()->withErrors(['report' => 'This report has already been reviewed.']);
+        }
 
         $report->update([
             'status' => $data['status'],

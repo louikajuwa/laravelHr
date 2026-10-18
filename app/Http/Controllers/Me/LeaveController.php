@@ -17,7 +17,7 @@ class LeaveController extends Controller
 {
     public function __construct(private LeaveService $leaves) {}
 
-    public function index(Request $request): View|\Illuminate\Http\JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
         $requests = LeaveRequest::forUser($request->user()->id)
             ->with('leaveType:id,name,code')
@@ -27,14 +27,14 @@ class LeaveController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'data' => $requests->getCollection()->map(fn ($r) => [
-                    'id'               => $r->id,
-                    'leave_type'       => $r->leaveType->name,
-                    'reason'           => $r->reason,
+                    'id' => $r->id,
+                    'leave_type' => $r->leaveType->name,
+                    'reason' => $r->reason,
                     'start_date_epoch' => $r->start_date->timestamp,
-                    'end_date_epoch'   => $r->end_date->timestamp,
-                    'days'             => $r->days,
-                    'status'           => $r->status,
-                    'urls'             => ['cancel' => route('me.leave.cancel', $r)],
+                    'end_date_epoch' => $r->end_date->timestamp,
+                    'days' => $r->days,
+                    'status' => $r->status,
+                    'urls' => ['cancel' => route('me.leave.cancel', $r)],
                 ]),
                 'pagination' => $this->paginationMeta($requests),
             ]);

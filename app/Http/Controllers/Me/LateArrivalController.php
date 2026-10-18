@@ -8,6 +8,7 @@ use App\Models\LateArrivalReport;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class LateArrivalController extends Controller
 {
@@ -19,7 +20,10 @@ class LateArrivalController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'date' => ['required', 'date'],
+            'date' => ['required', 'date', 'before_or_equal:today',
+                Rule::unique('late_arrival_reports', 'date')
+                    ->where('user_id', $request->user()->id)
+                    ->whereIn('status', ['pending', 'accepted', 'excused'])],
             'reason' => ['required', 'string', 'max:1000'],
         ]);
 

@@ -21,6 +21,6 @@ class AttendanceCorrection extends Model
 
     public function correctedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'corrected_by');
+        return $this->belongsTo(User::class, 'corrected_by')->withTrashed();
     }
 }

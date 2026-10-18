@@ -4,12 +4,13 @@ namespace App\Models;
 
 use App\Support\HasEpochTimes;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeaveRequest extends Model
 {
-    use HasEpochTimes;
+    use HasEpochTimes, HasFactory;
 
     protected $fillable = [
         'user_id', 'leave_type_id', 'start_date', 'end_date', 'days', 'reason',
@@ -25,7 +26,7 @@ class LeaveRequest extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function leaveType(): BelongsTo
@@ -35,7 +36,7 @@ class LeaveRequest extends Model
 
     public function approver(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'approver_id');
+        return $this->belongsTo(User::class, 'approver_id')->withTrashed();
     }
 
     public function scopePending(Builder $q): Builder

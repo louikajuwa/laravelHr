@@ -101,9 +101,10 @@ class User extends Authenticatable
         }
 
         return $query->where(function (Builder $q) use ($term) {
-            $q->where('name', 'like', "%{$term}%")
-                ->orWhere('email', 'like', "%{$term}%")
-                ->orWhere('employee_code', 'like', "%{$term}%");
+            $like = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term).'%';
+            $q->whereRaw("name like ? escape '!'", [$like])
+                ->orWhereRaw("email like ? escape '!'", [$like])
+                ->orWhereRaw("employee_code like ? escape '!'", [$like]);
         });
     }
 

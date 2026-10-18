@@ -29,6 +29,9 @@ class LeaveService
                 throw new RuntimeException('End date must be on or after the start date.');
             }
 
+            // Serialize concurrent requests for the same balance before checking overlap/availability.
+            $balance = $this->lockedBalance($user, $type, (int) $start->year);
+
             if ($this->hasOverlap($user, $start, $end)) {
                 throw new RuntimeException('You already have a leave request overlapping these dates.');
             }
@@ -37,8 +40,6 @@ class LeaveService
             if ($days <= 0) {
                 throw new RuntimeException('The selected range contains no working days.');
             }
-
-            $balance = $this->balanceFor($user, $type, (int) $start->year);
 
             if ($type->is_paid && $balance->available < $days) {
                 throw new RuntimeException("Insufficient {$type->name} balance ({$balance->available} day(s) left).");
@@ -68,7 +69,7 @@ class LeaveService
     public function approve(LeaveRequest $leave, User $approver, ?string $note = null): LeaveRequest
     {
         return DB::transaction(function () use ($leave, $approver, $note) {
-            $this->guardPending($leave);
+            $leave = $this->lockPending($leave);
 
             $leave->update([
                 'status' => 'approved',
@@ -77,7 +78,7 @@ class LeaveService
                 'decision_note' => $note,
             ]);
 
-            $balance = $this->balanceFor($leave->user, $leave->leaveType, (int) Carbon::parse($leave->start_date)->year);
+            $balance = $this->lockedBalance($leave->user, $leave->leaveType, (int) Carbon::parse($leave->start_date)->year);
             $balance->decrement('pending', (float) $leave->days);
             $balance->increment('used', (float) $leave->days);
 
@@ -93,7 +94,7 @@ class LeaveService
     public function reject(LeaveRequest $leave, User $approver, ?string $note = null): LeaveRequest
     {
         return DB::transaction(function () use ($leave, $approver, $note) {
-            $this->guardPending($leave);
+            $leave = $this->lockPending($leave);
 
             $leave->update([
                 'status' => 'rejected',
@@ -102,7 +103,7 @@ class LeaveService
                 'decision_note' => $note,
             ]);
 
-            $this->balanceFor($leave->user, $leave->leaveType, (int) Carbon::parse($leave->start_date)->year)
+            $this->lockedBalance($leave->user, $leave->leaveType, (int) Carbon::parse($leave->start_date)->year)
                 ->decrement('pending', (float) $leave->days);
 
             $this->audit->log('leave.rejected', $leave, ['status' => 'pending'],
@@ -115,10 +116,10 @@ class LeaveService
     public function cancel(LeaveRequest $leave): LeaveRequest
     {
         return DB::transaction(function () use ($leave) {
-            $this->guardPending($leave);
+            $leave = $this->lockPending($leave);
 
             $leave->update(['status' => 'cancelled']);
-            $this->balanceFor($leave->user, $leave->leaveType, (int) Carbon::parse($leave->start_date)->year)
+            $this->lockedBalance($leave->user, $leave->leaveType, (int) Carbon::parse($leave->start_date)->year)
                 ->decrement('pending', (float) $leave->days);
 
             $this->audit->log('leave.cancelled', $leave, ['status' => 'pending'],
@@ -178,6 +179,9 @@ class LeaveService
                 continue;
             }
             $att = Attendance::firstOrNew(['user_id' => $leave->user_id, 'date' => $d->toDateString()]);
+            if ($att->exists && $att->time_in) {
+                continue; // never overwrite a day the employee actually worked
+            }
             $att->status = 'on_leave';
             $att->shift_id = $shift?->id;
             $att->remarks = $leave->leaveType->code.' leave';
@@ -192,6 +196,23 @@ class LeaveService
             ->where('start_date', '<=', $end->toDateString())
             ->where('end_date', '>=', $start->toDateString())
             ->exists();
+    }
+
+    private function lockedBalance(User $user, LeaveType $type, int $year): LeaveBalance
+    {
+        $this->balanceFor($user, $type, $year);
+
+        return LeaveBalance::where(['user_id' => $user->id, 'leave_type_id' => $type->id, 'year' => $year])
+            ->lockForUpdate()->firstOrFail();
+    }
+
+    /** Re-fetch the request under a row lock (must run inside a transaction) and ensure it is still pending. */
+    private function lockPending(LeaveRequest $leave): LeaveRequest
+    {
+        $fresh = LeaveRequest::whereKey($leave->getKey())->lockForUpdate()->firstOrFail();
+        $this->guardPending($fresh);
+
+        return $fresh;
     }
 
     private function guardPending(LeaveRequest $leave): void

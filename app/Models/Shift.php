@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Shift extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'name', 'start_time', 'end_time', 'grace_period_minutes',
         'break_minutes', 'working_days', 'overtime_threshold_minutes', 'is_active',

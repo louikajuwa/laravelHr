@@ -17,7 +17,7 @@ class StoreLeaveTypeRequest extends FormRequest
      */
     public function rules(): array
     {
-        $id = $this->route('leave_type')?->id;
+        $id = $this->route('leaveType')?->id;
 
         return [
             'name' => ['required', 'string', 'max:255'],

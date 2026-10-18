@@ -7,6 +7,7 @@ use App\Http\Requests\Leave\StoreLeaveTypeRequest;
 use App\Models\LeaveType;
 use App\Services\AuditLogger;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -14,21 +15,21 @@ class LeaveTypeController extends Controller
 {
     public function __construct(private AuditLogger $audit) {}
 
-    public function index(Request $request): View|\Illuminate\Http\JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
         $types = LeaveType::query()->orderBy('name')->paginate(15)->withQueryString();
 
         if ($request->expectsJson()) {
             return response()->json([
                 'data' => $types->getCollection()->map(fn ($t) => [
-                    'id'                    => $t->id,
-                    'name'                  => $t->name,
-                    'code'                  => $t->code,
+                    'id' => $t->id,
+                    'name' => $t->name,
+                    'code' => $t->code,
                     'default_days_per_year' => $t->default_days_per_year,
-                    'is_paid'               => $t->is_paid,
-                    'is_active'             => $t->is_active,
-                    'urls'                  => [
-                        'edit'    => route('hr.leave-types.edit', $t),
+                    'is_paid' => $t->is_paid,
+                    'is_active' => $t->is_active,
+                    'urls' => [
+                        'edit' => route('hr.leave-types.edit', $t),
                         'destroy' => route('hr.leave-types.destroy', $t),
                     ],
                 ]),
@@ -68,6 +69,10 @@ class LeaveTypeController extends Controller
 
     public function destroy(LeaveType $leaveType): RedirectResponse
     {
+        if ($leaveType->requests()->exists() || $leaveType->balances()->exists()) {
+            return back()->withErrors(['leave_type' => 'This leave type has leave requests or balances and cannot be deleted. Deactivate it instead.']);
+        }
+
         $leaveType->delete();
 
         return redirect()->route('hr.leave-types.index')->with('status', 'Leave type deleted.');

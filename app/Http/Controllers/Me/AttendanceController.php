@@ -15,9 +15,10 @@ class AttendanceController extends Controller
 {
     public function __construct(private AttendanceService $attendance) {}
 
-    public function index(Request $request): View|\Illuminate\Http\JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
-        $month = $request->query('month', now()->format('Y-m'));
+        $month = $request->query('month');
+        $month = is_string($month) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month) ? $month : now()->format('Y-m');
         $start = Carbon::parse($month.'-01')->startOfMonth();
         $end = $start->copy()->endOfMonth();
 
@@ -28,12 +29,12 @@ class AttendanceController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'data' => $records->getCollection()->map(fn ($r) => [
-                    'id'               => $r->id,
-                    'date_epoch'       => $r->date->timestamp,
-                    'time_in_epoch'    => $r->time_in ? $r->epoch('time_in') : null,
-                    'time_out_epoch'   => $r->time_out ? $r->epoch('time_out') : null,
-                    'status'           => $r->status,
-                    'late_minutes'     => $r->late_minutes,
+                    'id' => $r->id,
+                    'date_epoch' => $r->date->timestamp,
+                    'time_in_epoch' => $r->time_in ? $r->epoch('time_in') : null,
+                    'time_out_epoch' => $r->time_out ? $r->epoch('time_out') : null,
+                    'status' => $r->status,
+                    'late_minutes' => $r->late_minutes,
                     'overtime_minutes' => $r->overtime_minutes,
                 ]),
                 'pagination' => $this->paginationMeta($records),
@@ -42,7 +43,7 @@ class AttendanceController extends Controller
 
         return view('me.attendance.index', [
             'records' => $records,
-            'month'   => $month,
+            'month' => $month,
         ]);
     }
 

@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use App\Models\Department;
 use App\Services\AttendanceService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -15,7 +16,7 @@ class AttendanceController extends Controller
 {
     public function __construct(private AttendanceService $attendance) {}
 
-    public function index(Request $request): View|\Illuminate\Http\JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
         $from = $request->date('from')?->toDateString() ?? now()->startOfMonth()->toDateString();
         $to = $request->date('to')?->toDateString() ?? now()->toDateString();
@@ -32,27 +33,27 @@ class AttendanceController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'data' => $records->getCollection()->map(fn ($r) => [
-                    'id'               => $r->id,
-                    'date_epoch'       => $r->date->timestamp,
-                    'user_name'        => $r->user->name,
-                    'employee_code'    => $r->user->employee_code,
-                    'department'       => $r->user->department?->name,
-                    'time_in_epoch'    => $r->time_in ? $r->epoch('time_in') : null,
-                    'time_out_epoch'   => $r->time_out ? $r->epoch('time_out') : null,
-                    'status'           => $r->status,
-                    'late_minutes'     => $r->late_minutes,
+                    'id' => $r->id,
+                    'date_epoch' => $r->date->timestamp,
+                    'user_name' => $r->user->name,
+                    'employee_code' => $r->user->employee_code,
+                    'department' => $r->user->department?->name,
+                    'time_in_epoch' => $r->time_in ? $r->epoch('time_in') : null,
+                    'time_out_epoch' => $r->time_out ? $r->epoch('time_out') : null,
+                    'status' => $r->status,
+                    'late_minutes' => $r->late_minutes,
                     'overtime_minutes' => $r->overtime_minutes,
-                    'urls'             => ['edit' => route('hr.attendance.edit', $r)],
+                    'urls' => ['edit' => route('hr.attendance.edit', $r)],
                 ]),
                 'pagination' => $this->paginationMeta($records),
             ]);
         }
 
         return view('hr.attendance.index', [
-            'records'     => $records,
+            'records' => $records,
             'departments' => Department::orderBy('name')->get(['id', 'name']),
-            'from'        => $from,
-            'to'          => $to,
+            'from' => $from,
+            'to' => $to,
         ]);
     }
 

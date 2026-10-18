@@ -25,9 +25,14 @@ class AttendanceService
         }
 
         $shift = $user->effectiveShift();
+        $wasOnLeave = $attendance->exists && $attendance->status === 'on_leave';
         $attendance->shift_id = $shift?->id;
         $attendance->time_in = $at;
         $attendance->source = 'web_clock';
+        if ($wasOnLeave) {
+            // Employee showed up on an approved-leave day: allow it, but keep a trace in remarks.
+            $attendance->remarks = trim(($attendance->remarks ? $attendance->remarks.' | ' : '').'Clocked in during approved leave');
+        }
 
         $this->applyLate($attendance, $shift, $at);
         $attendance->save();
@@ -47,6 +52,17 @@ class AttendanceService
         $date = $at->toDateString();
 
         $attendance = Attendance::where('user_id', $user->id)->where('date', $date)->first();
+
+        if (! $attendance || ! $attendance->time_in) {
+            // Overnight shift: the open row belongs to yesterday.
+            $prev = Attendance::where('user_id', $user->id)
+                ->where('date', $at->copy()->subDay()->toDateString())
+                ->whereNotNull('time_in')->whereNull('time_out')->first();
+            $prevShift = $prev ? ($prev->shift ?? $user->effectiveShift()) : null;
+            if ($prev && $prevShift?->crossesMidnight()) {
+                $attendance = $prev;
+            }
+        }
 
         if (! $attendance || ! $attendance->time_in) {
             throw new RuntimeException('You must clock in before clocking out.');
@@ -83,9 +99,12 @@ class AttendanceService
                     continue;
                 }
                 $new = $changes[$field] ?: null;
+                if ($new !== null && in_array($field, ['time_in', 'time_out'], true)) {
+                    $new = Carbon::parse($new);
+                }
                 $old = $attendance->$field;
                 $oldStr = $old instanceof Carbon ? $old->toDateTimeString() : (string) $old;
-                $newStr = (string) $new;
+                $newStr = $new instanceof Carbon ? $new->toDateTimeString() : (string) $new;
                 if ($oldStr === $newStr) {
                     continue;
                 }
@@ -101,10 +120,12 @@ class AttendanceService
                 $attendance->$field = $new;
             }
 
-            if ($attendance->time_in && $attendance->shift) {
+            // HR-chosen absent/half_day/holiday/on_leave is authoritative; only present/late (or empty) is recomputed.
+            $recomputeStatus = in_array($attendance->status, ['present', 'late', '', null], true);
+            if ($attendance->time_in && $attendance->shift && $recomputeStatus) {
                 $this->applyLate($attendance, $attendance->shift, Carbon::parse($attendance->time_in));
             }
-            if ($attendance->time_out) {
+            if ($attendance->time_in && $attendance->time_out) {
                 $this->applyDurations($attendance, $attendance->shift);
             }
 
