@@ -9,6 +9,7 @@ use App\Models\Shift;
 use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,7 @@ class DepartmentController extends Controller
 {
     public function __construct(private AuditLogger $audit) {}
 
-    public function index(Request $request): View|\Illuminate\Http\JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
         $departments = Department::query()
             ->withCount('employees')
@@ -27,15 +28,15 @@ class DepartmentController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'data' => $departments->getCollection()->map(fn ($d) => [
-                    'id'              => $d->id,
-                    'name'            => $d->name,
-                    'code'            => $d->code,
-                    'is_active'       => $d->is_active,
-                    'manager'         => $d->manager?->name,
-                    'shift'           => $d->shift?->name,
+                    'id' => $d->id,
+                    'name' => $d->name,
+                    'code' => $d->code,
+                    'is_active' => $d->is_active,
+                    'manager' => $d->manager?->name,
+                    'shift' => $d->shift?->name,
                     'employees_count' => $d->employees_count,
-                    'urls'            => [
-                        'edit'    => route('hr.departments.edit', $d),
+                    'urls' => [
+                        'edit' => route('hr.departments.edit', $d),
                         'destroy' => route('hr.departments.destroy', $d),
                     ],
                 ]),

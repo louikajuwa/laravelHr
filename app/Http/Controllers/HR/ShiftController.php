@@ -9,6 +9,7 @@ use App\Models\Shift;
 use App\Services\AuditLogger;
 use App\Services\ShiftService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,7 @@ class ShiftController extends Controller
 {
     public function __construct(private AuditLogger $audit, private ShiftService $shifts) {}
 
-    public function index(Request $request): View|\Illuminate\Http\JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
         $shifts = Shift::query()->withCount('users')
             ->when($request->filled('q'), fn ($q) => $q->where('name', 'like', '%'.$request->query('q').'%'))
@@ -25,16 +26,16 @@ class ShiftController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'data' => $shifts->getCollection()->map(fn ($s) => [
-                    'id'                   => $s->id,
-                    'name'                 => $s->name,
-                    'start_time'           => substr($s->start_time, 0, 5),
-                    'end_time'             => substr($s->end_time, 0, 5),
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'start_time' => substr($s->start_time, 0, 5),
+                    'end_time' => substr($s->end_time, 0, 5),
                     'grace_period_minutes' => $s->grace_period_minutes,
-                    'working_days'         => $s->working_days ?? [],
-                    'users_count'          => $s->users_count,
-                    'urls'                 => [
-                        'edit'    => route('hr.shifts.edit', $s),
-                        'assign'  => route('hr.shifts.assign', $s),
+                    'working_days' => $s->working_days ?? [],
+                    'users_count' => $s->users_count,
+                    'urls' => [
+                        'edit' => route('hr.shifts.edit', $s),
+                        'assign' => route('hr.shifts.assign', $s),
                         'destroy' => route('hr.shifts.destroy', $s),
                     ],
                 ]),
@@ -43,7 +44,7 @@ class ShiftController extends Controller
         }
 
         return view('hr.shifts.index', [
-            'shifts'      => $shifts,
+            'shifts' => $shifts,
             'departments' => Department::orderBy('name')->get(['id', 'name']),
         ]);
     }

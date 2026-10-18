@@ -6,13 +6,12 @@ use App\Models\Attendance;
 use App\Models\Department;
 use App\Models\JobPosition;
 use App\Models\LeaveType;
+use App\Models\Payroll;
 use App\Models\SalaryStructure;
-use App\Models\Shift;
 use App\Models\User;
 use App\Services\EmployeeService;
 use App\Services\LeaveService;
 use App\Services\PayrollService;
-use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use RuntimeException;
 
@@ -70,7 +69,7 @@ class DemoDataSeeder extends Seeder
         $start = now()->subMonthNoOverflow()->startOfMonth();
         $end = $start->copy()->endOfMonth();
         $result = $this->payroll->generateBatch($start, $end, $admin);
-        \App\Models\Payroll::query()->update(['status' => 'finalized', 'finalized_at' => now()]);
+        Payroll::query()->update(['status' => 'finalized', 'finalized_at' => now()]);
 
         $this->command?->info("Demo data: {$staff->count()} employees, payroll {$result['generated']} generated.");
     }

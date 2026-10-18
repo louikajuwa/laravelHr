@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Department;
 use App\Models\Shift;
+use App\Models\User;
 
 class ShiftService
 {
@@ -11,7 +12,7 @@ class ShiftService
 
     public function assignToUser(Shift $shift, int $userId): void
     {
-        \App\Models\User::whereKey($userId)->update(['shift_id' => $shift->id]);
+        User::whereKey($userId)->update(['shift_id' => $shift->id]);
         $this->audit->log('shift.assigned', $shift, [], ['user_id' => $userId],
             "Assigned shift {$shift->name} to user #{$userId}");
     }

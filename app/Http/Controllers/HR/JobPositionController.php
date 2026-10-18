@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\JobPosition;
 use App\Services\AuditLogger;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -14,7 +15,7 @@ class JobPositionController extends Controller
 {
     public function __construct(private AuditLogger $audit) {}
 
-    public function index(Request $request): View|\Illuminate\Http\JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
         $positions = JobPosition::query()
             ->with('department:id,name')->withCount('employees')
@@ -24,12 +25,12 @@ class JobPositionController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'data' => $positions->getCollection()->map(fn ($p) => [
-                    'id'              => $p->id,
-                    'title'           => $p->title,
-                    'department'      => $p->department?->name,
+                    'id' => $p->id,
+                    'title' => $p->title,
+                    'department' => $p->department?->name,
                     'employees_count' => $p->employees_count,
-                    'urls'            => [
-                        'edit'    => route('hr.positions.edit', $p),
+                    'urls' => [
+                        'edit' => route('hr.positions.edit', $p),
                         'destroy' => route('hr.positions.destroy', $p),
                     ],
                 ]),
