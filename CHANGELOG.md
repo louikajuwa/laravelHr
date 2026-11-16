@@ -17,11 +17,9 @@
 ### Changed
 - Salary structure form: "Biweekly" is now labelled "Semi-monthly (1–15, 16–end)". The undefined "Fixed" absence mode is no longer offered.
 
-### Database / configuration — manual steps
-- **Migration:** `2026_10_18_000001_add_revocation_to_leave_requests` (additive: `revoked_at`, `revoked_by`). It has already been applied to the local dev DB.
-- Build the assets: `docker compose run --rm node npm ci && docker compose run --rm node npm run build`.
-- Rebuild the image: `docker compose up -d --build`.
-- `.env`: set `MAIL_MAILER=smtp`, `MAIL_HOST=mailpit`, `MAIL_PORT=1025` for Mailpit, and optionally set `HR_TIMEZONE`.
+### Upgrade notes
+
+- Run `php artisan migrate` after upgrading (adds `revoked_at` / `revoked_by` to `leave_requests`).
 
 ## [Unreleased] — 2026-10-18
 
@@ -72,13 +70,3 @@
 ### Tests
 - PHPUnit now runs against a dedicated MySQL database `laravel_hr_testing`; `tests/TestCase.php` refuses to run against any database whose name does not contain `testing`.
 - 77 feature/unit tests (was 2) covering security, leave, attendance and payroll.
-
-### Database / configuration — manual steps
-- **No schema migrations were added.**
-- Create the test database once (already done on this machine):
-  ```sql
-  CREATE DATABASE laravel_hr_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-  GRANT ALL ON laravel_hr_testing.* TO 'hr_user'@'%';
-  ```
-- Optional: set `DB_ROOT_PASSWORD` / `DB_PASSWORD` in the shell or a compose `.env` to override the defaults.
-- Recreate containers (`docker compose up -d`) to apply the localhost port bindings.

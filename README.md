@@ -143,3 +143,7 @@ SQL
 docker exec hr_app php artisan test
 docker exec hr_app vendor/bin/pint --test
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
